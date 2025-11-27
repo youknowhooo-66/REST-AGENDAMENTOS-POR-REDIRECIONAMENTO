@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String
+  email        String        @unique
+  password     String
+  phone        String?
+  role         Role          @default(CLIENT)
+  tokens       Token[]
+  appointments Appointment[]
+
+  @@map("users")
+}
+
+model Token {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique
+  type      TokenType
+  userId    Int
+  revoked   Boolean   @default(false)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("token")
+}
+
+// 2. Serviço (Entidade CRUD: nome, preço, duração)
+model Service {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  price        Float         @default(0.0) // Usamos Float, mas Decimal pode ser melhor para precisão financeira
+  durationMin  Int           @map("duration_min") // Duração em minutos (RF006)
+  appointments Appointment[]
+
+  @@map("services")
+}
+
+// 3. Agendamento (Entidade CRUD: cliente, serviço, data/hora)
+model Appointment {
+  id Int @id @default(autoincrement())
+
+  // Relacionamentos (Chaves Estrangeiras)
+  clientId Int  @map("client_id")
+  client   User @relation(fields: [clientId], references: [id])
+
+  serviceId Int     @map("service_id")
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  // Datas e Status
+  startTime DateTime @map("start_time") // Início do Agendamento (RF009, RF011)
+  endTime   DateTime @map("end_time") // Fim do Agendamento (Crucial para a lógica de conflito RF012)
+  status    String   @default("PENDING") // Ex: PENDING, CONFIRMED, CANCELLED (RF013)
+
+  @@map("appointments")
+}
