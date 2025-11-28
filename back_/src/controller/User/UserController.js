@@ -1,14 +1,20 @@
-import  {prisma}  from '../../config/prismaClient.js';
+import { prisma } from '../../config/prismaClient.js';
 import bcrypt from 'bcrypt';
 import { Role } from '@prisma/client'; // Importando o Enum Role para segurança
 
 class UserController {
-    
+
     // READ (Listar todos os usuários)
+    // TODO: Add role-based access control. Only ADMINs should be able to list all users.
     async getAll(req, res) {
+        const { role } = req.user;
+
+        if (role !== Role.ADMIN) {
+            return res.status(403).json({ error: 'Apenas administradores podem listar todos os usuários.' });
+        }
         try {
             const users = await prisma.user.findMany({
-                select: { id: true, name: true, email: true, phone: true, role: true },
+                select: { id: true, name: true, email: true, role: true },
             });
             return res.status(200).json(users);
         } catch (error) {
@@ -18,12 +24,18 @@ class UserController {
     }
 
     // READ (Buscar usuário por ID)
+    // TODO: Add role-based access control. A user should only be able to get their own data, unless they are an ADMIN.
     async getById(req, res) {
         const { id } = req.params;
+        const { userId, role } = req.user;
+
+        if (role !== Role.ADMIN && userId !== id) {
+            return res.status(403).json({ error: 'Você não tem permissão para visualizar este usuário.' });
+        }
         try {
             const user = await prisma.user.findUnique({
-                where: { id: parseInt(id) },
-                select: { id: true, name: true, email: true, phone: true, role: true, appointments: true },
+                where: { id: id },
+                select: { id: true, name: true, email: true, role: true },
             });
 
             if (!user) {
@@ -37,30 +49,46 @@ class UserController {
     }
 
     // UPDATE
+    // TODO: Add role-based access control. A user should only be able to update their own data, unless they are an ADMIN.
     async update(req, res) {
         const { id } = req.params;
-        const { name, email, phone, password, role } = req.body;
-        let updateData = { name, email, phone, role };
+        const { name, email, password, role } = req.body;
+        const { userId, role: userRole } = req.user; // Renomear 'role' do req.user para 'userRole'
+        let updateData = { name, email }; // Inicializar sem 'role' para evitar sobrescrita indesejada
 
+        // Permissão: Apenas ADMIN pode atualizar qualquer usuário, ou usuário pode atualizar a si mesmo
+        if (userRole !== Role.ADMIN && userId !== id) {
+            return res.status(403).json({ error: 'Você não tem permissão para atualizar este usuário.' });
+        }
+
+        // Restrição de atualização de role: Apenas ADMIN pode alterar roles
+        if (role && userRole !== Role.ADMIN) {
+            return res.status(403).json({ error: 'Você não tem permissão para alterar o papel (role) de um usuário.' });
+        }
+        
         try {
             // 1. Hash da nova senha, se fornecida
             if (password) {
                 updateData.password = await bcrypt.hash(password, 10);
             }
-            
-            // 2. Validação do Role (para garantir que só roles válidos sejam inseridos)
-            if (role && !Object.values(Role).includes(role.toUpperCase())) {
-                 return res.status(400).json({ error: 'Role inválido.' });
-            }
-            if (role) {
+
+            // 2. Validação e aplicação do Role (se fornecido e permitido)
+            if (role && userRole === Role.ADMIN) { // Só aplica se for ADMIN
+                if (!Object.values(Role).includes(role.toUpperCase())) {
+                    return res.status(400).json({ error: 'Role inválido.' });
+                }
                 updateData.role = role.toUpperCase();
+            } else if (role && userRole !== Role.ADMIN) {
+                // Se um não-ADMIN tentar passar um 'role', ignoramos ou podemos retornar erro.
+                // Já tratado pela checagem de permissão acima, mas bom para clareza.
+                return res.status(403).json({ error: 'Você não tem permissão para alterar o papel (role) de um usuário.' });
             }
 
             // 3. Atualização no Prisma
             const updatedUser = await prisma.user.update({
-                where: { id: parseInt(id) },
+                where: { id: id },
                 data: updateData,
-                select: { id: true, name: true, email: true, phone: true, role: true },
+                select: { id: true, name: true, email: true, role: true },
             });
 
             return res.status(200).json(updatedUser);
@@ -70,7 +98,7 @@ class UserController {
                 return res.status(409).json({ error: 'Este email já está em uso.' });
             }
             if (error.code === 'P2025') {
-                 return res.status(404).json({ error: 'Usuário não encontrado para atualizar.' });
+                return res.status(404).json({ error: 'Usuário não encontrado para atualizar.' });
             }
             console.error('Erro ao atualizar usuário:', error);
             return res.status(500).json({ error: 'Erro interno do servidor ao atualizar usuário.' });
@@ -78,11 +106,17 @@ class UserController {
     }
 
     // DELETE
+    // TODO: Add role-based access control. Only ADMINs should be able to delete users.
     async delete(req, res) {
         const { id } = req.params;
+        const { role } = req.user;
+
+        if (role !== Role.ADMIN) {
+            return res.status(403).json({ error: 'Apenas administradores podem deletar usuários.' });
+        }
         try {
             await prisma.user.delete({
-                where: { id: parseInt(id) },
+                where: { id: id },
             });
             return res.status(204).send(); // 204 No Content para sucesso na exclusão
         } catch (error) {

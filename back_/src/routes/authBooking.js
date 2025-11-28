@@ -1,28 +1,23 @@
 import express from 'express';
-import { createBooking, cancelBooking, getClientBookings } from '../controller/Booking/BookingController.js'; // Import getClientBookings
-import { auth } from '../middleware/auth.js'; // Middleware de proteção
-import pkg from '@prisma/client';
-const { Role } = pkg;
+import { createBooking, cancelBooking, getClientBookings, getProviderBookings, providerCancelBooking } from '../controller/Booking/BookingController.js'; // Import getProviderBookings
 
 export const bookingRouter = express.Router();
 
-// Middleware para verificar se o usuário é um CLIENT
-const isClient = (req, res, next) => {
-    if (req.user && req.user.role === Role.CLIENT) {
-        next();
-    } else {
-        res.status(403).json({ error: 'Apenas clientes podem realizar esta ação.' });
-    }
-};
-
 // CREATE: Criar um novo agendamento (protegido para clientes)
-bookingRouter.post('/', auth, isClient, createBooking);
+bookingRouter.post('/', createBooking);
 
 // GET: Listar todos os agendamentos do cliente autenticado
-bookingRouter.get('/', auth, isClient, getClientBookings);
+bookingRouter.get('/', getClientBookings);
+
+// GET: Listar todos os agendamentos do provedor autenticado
+bookingRouter.get('/provider', getProviderBookings);
 
 // CANCEL: Cancelar um agendamento (rota pública, acessada via link de e-mail)
+// Note: This should ideally be a POST to prevent accidental cancellations.
 bookingRouter.get('/cancel', cancelBooking);
 
+// CANCEL: Cancelar um agendamento pelo provedor
+bookingRouter.post('/:bookingId/provider-cancel', providerCancelBooking);
+
 // TODO: Implementar rota para buscar um agendamento específico do cliente
-// bookingRouter.get('/:id', auth, isClient, bookingController.getClientBookingById);
+// bookingRouter.get('/:id', bookingController.getClientBookingById);

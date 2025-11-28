@@ -1,66 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import BookingForm from '../../components/BookingForm/BookingForm';
 import ServiceCard from '../../components/ServiceCard/ServiceCard';
 import { IconCircleCheck, IconCalendarX } from '../../components/Icons';
 import { toast } from 'react-toastify';
-import Button from '../../components/Form/Button'; // Added Button import
+import Button from '../../components/Form/Button';
 import RegisterModal from '../../components/RegisterModal/RegisterModal';
 import ClientDetailsModal from '../../components/ClientDetailsModal/ClientDetailsModal';
-import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:3000'; // Assuming your backend runs on port 3000
+import api from '../../services/api'; // Use the configured API instance
 
 const daysOfWeekMap = {
-    'monday': 'Segunda-feira',
-    'tuesday': 'Terça-feira',
-    'wednesday': 'Quarta-feira',
-    'thursday': 'Quinta-feira',
-    'friday': 'Sexta-feira',
-    'saturday': 'Sábado',
-    'sunday': 'Domingo',
+    0: 'Domingo',
+    1: 'Segunda-feira',
+    2: 'Terça-feira',
+    3: 'Quarta-feira',
+    4: 'Quinta-feira',
+    5: 'Sexta-feira',
+    6: 'Sábado',
 };
 
 const Scheduling = () => {
     const { serviceId: paramServiceId } = useParams();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, login } = useAuth(); // Destructure login
+    const navigate = useNavigate();
+
     const [selectedService, setSelectedService] = useState(null);
+    const [availableSlots, setAvailableSlots] = useState({}); // Stores slots by date
+    const [selectedDate, setSelectedDate] = useState('');
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [isBookingConfirmed, setBookingConfirmed] = useState(false);
-    const [services, setServices] = useState([]); // Initialize as empty array
+    const [services, setServices] = useState([]);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [showClientDetailsModal, setShowClientDetailsModal] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tempRegisteredUser, setTempRegisteredUser] = useState(null); // To hold user data after first modal
+    const [tempRegisteredUser, setTempRegisteredUser] = useState(null);
 
     // --- API Calls ---
-    const fetchServiceById = async (id) => {
+    const fetchServiceById = useCallback(async (id) => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/services/${id}`);
+            const response = await api.get(`/public/services/${id}`);
             return response.data;
         } catch (err) {
             console.error('Error fetching service by ID:', err);
-            setError('Failed to load service details.');
+            setError('Falha ao carregar detalhes do serviço.');
             return null;
         }
-    };
+    }, []);
 
-    const fetchAllServices = async () => {
+    const fetchAllServices = useCallback(async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/services`);
+            const response = await api.get(`/public/services`);
             return response.data;
         } catch (err) {
             console.error('Error fetching all services:', err);
-            setError('Failed to load services.');
+            setError('Falha ao carregar serviços.');
             return null;
         }
-    };
+    }, []);
+
+    const fetchAvailableSlots = useCallback(async (serviceId, date) => {
+        try {
+            const response = await api.get(`/public/services/${serviceId}/slots?date=${date}`);
+            return response.data;
+        } catch (err) {
+            console.error('Error fetching available slots:', err);
+            setError('Falha ao carregar horários disponíveis.');
+            return null;
+        }
+    }, []);
 
     const registerUser = async (userData) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/register`, userData);
+            const response = await api.post(`/auth/register`, userData); // Corrected endpoint
             return response.data;
         } catch (err) {
             console.error('Error registering user:', err);
@@ -71,7 +84,7 @@ const Scheduling = () => {
 
     const updateUserDetails = async (userId, userData) => {
         try {
-            const response = await axios.put(`${API_BASE_URL}/users/${userId}`, userData);
+            const response = await api.put(`/users/${userId}`, userData);
             return response.data;
         } catch (err) {
             console.error('Error updating user details:', err);
@@ -90,15 +103,22 @@ const Scheduling = () => {
                 const service = await fetchServiceById(paramServiceId);
                 if (service) {
                     setSelectedService(service);
+                    // Fetch slots for today by default
+                    const today = new Date().toISOString().slice(0, 10);
+                    setSelectedDate(today);
+                    const slots = await fetchAvailableSlots(service.id, today);
+                    if (slots) {
+                        setAvailableSlots({ [today]: slots });
+                    }
+
                     if (!isAuthenticated) {
                         setShowRegisterModal(true);
-                    } else if (!user.name || !user.phone) { // Assuming age is not critical for initial check
+                    } else if (!user.name || !user.phone) {
                         setShowClientDetailsModal(true);
                     }
                 } else {
-                    // Service not found, redirect or show error
-                    navigate('/schedule'); // Redirect to general scheduling
-                    toast.error('Service not found.');
+                    navigate('/scheduling');
+                    toast.error('Serviço não encontrado.');
                 }
             } else {
                 const allServices = await fetchAllServices();
@@ -110,20 +130,32 @@ const Scheduling = () => {
         };
 
         initializeScheduling();
-    }, [paramServiceId, isAuthenticated, user, navigate]); // Added user and navigate to dependencies
+    }, [paramServiceId, isAuthenticated, user, navigate, fetchServiceById, fetchAllServices, fetchAvailableSlots]);
+
+    useEffect(() => {
+        if (selectedService && selectedDate) {
+            const getSlots = async () => {
+                if (!availableSlots[selectedDate]) { // Only fetch if not already in state
+                    setLoading(true);
+                    const slots = await fetchAvailableSlots(selectedService.id, selectedDate);
+                    if (slots) {
+                        setAvailableSlots(prev => ({ ...prev, [selectedDate]: slots }));
+                    }
+                    setLoading(false);
+                }
+            };
+            getSlots();
+        }
+    }, [selectedService, selectedDate, fetchAvailableSlots, availableSlots]);
 
     // --- Handlers for Modals ---
     const handleRegisterSuccess = async (formData) => {
         const registered = await registerUser(formData);
         if (registered) {
-            setTempRegisteredUser(registered); // Store registered user data
+            setTempRegisteredUser(registered);
             setShowRegisterModal(false);
-            setShowClientDetailsModal(true); // Proceed to second modal
-            // Automatically log in the user after registration for seamless experience
-            // This assumes register endpoint returns tokens or we can call login
-            // For now, we'll just store temp user and let client details modal update
-            // In a real app, you'd get tokens and call login(tokens) here.
-            toast.success('Registration successful! Please complete your profile.');
+            setShowClientDetailsModal(true);
+            toast.success('Registro bem-sucedido! Por favor, complete seu perfil.');
         }
     };
 
@@ -131,27 +163,66 @@ const Scheduling = () => {
         if (tempRegisteredUser?.id) {
             const updatedUser = await updateUserDetails(tempRegisteredUser.id, details);
             if (updatedUser) {
-                // Assuming updateUserDetails returns the full user object with tokens
-                // If not, you might need to re-fetch user data or log in again
-                login(updatedUser.token); // Assuming updatedUser contains a token
+                // Assuming the update returns the new user data. We need to manually update the token if a new one is issued, or re-login if the context handles token refresh.
+                // For now, we assume the backend does NOT return a new token on profile update.
+                // If the user context needs refreshing, a full login might be required.
                 setShowClientDetailsModal(false);
-                toast.success('Profile updated successfully! You can now book.');
-                // If a service was selected, user can now proceed to book
+                toast.success('Perfil atualizado com sucesso! Agora você pode agendar.');
+                // Here, you might want to re-fetch the user details to update the context if needed, or simply trust the backend response if it's complete.
             }
-        } else if (user?.id) { // Case where user was already logged in but profile incomplete
+        } else if (user?.id) {
             const updatedUser = await updateUserDetails(user.id, details);
             if (updatedUser) {
-                login(updatedUser.token); // Refresh user context
+                // This scenario means an already logged-in user updated their profile.
+                // The `login` function from useAuth expects tokens, which `updateUserDetails` doesn't provide.
+                // For a proper update, you'd need to re-fetch user data and update AuthContext's user state.
+                // For simplicity, we'll just close the modal and rely on a future re-render or explicit refresh if necessary.
                 setShowClientDetailsModal(false);
-                toast.success('Profile updated successfully! You can now book.');
+                toast.success('Perfil atualizado com sucesso! Agora você pode agendar.');
             }
         }
     };
 
+    const handleBookingConfirm = async (clientInfo) => {
+        if (!selectedSlot) {
+            toast.error('Por favor, selecione um horário.');
+            return;
+        }
+        if (!isAuthenticated) {
+            toast.error('Você precisa estar logado para agendar.');
+            setShowRegisterModal(true);
+            return;
+        }
+
+        try {
+            const bookingData = {
+                slotId: selectedSlot.id,
+                // Client info might be redundant if user is authenticated and backend uses req.user.userId
+                // We'll pass it for now if backend expects it.
+                // name: clientInfo.name,
+                // email: clientInfo.email,
+                // phone: clientInfo.phone,
+            };
+            await api.post('/bookings', bookingData);
+            toast.success('Agendamento realizado com sucesso! Um e-mail de confirmação foi enviado.');
+            setBookingConfirmed(true);
+            setSelectedSlot(null); // Clear selected slot
+            // Optionally refresh slots for the current date to reflect the booking
+            const slots = await fetchAvailableSlots(selectedService.id, selectedDate);
+            if (slots) {
+                setAvailableSlots(prev => ({ ...prev, [selectedDate]: slots }));
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Erro ao realizar agendamento.');
+            console.error('Error creating booking:', error);
+        }
+    };
 
 
-    if (loading) return <div className="text-center p-4">Loading...</div>;
-    if (error) return <div className="text-center p-4 text-red-500">Error: {error}</div>;
+    if (loading) return <div className="text-center p-4">Carregando...</div>;
+    if (error) return <div className="text-center p-4 text-red-500">Erro: {error}</div>;
+
+    const currentDaySlots = availableSlots[selectedDate] || [];
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 p-4 sm:p-8">
@@ -167,7 +238,7 @@ const Scheduling = () => {
                             <ServiceCard 
                                 key={service.id} 
                                 service={service} 
-                                onSelectService={setSelectedService} 
+                                onSelectService={() => setSelectedService(service)} 
                             />
                         ))}
                     </div>
@@ -180,38 +251,58 @@ const Scheduling = () => {
                             </Button>
                         </h2>
                         
-                        {/* This schedule rendering logic needs to be adapted for real data */}
-                        {/* For now, it assumes service.schedule exists and has day/slots */}
-                        {selectedService.schedule && selectedService.schedule.map(sDay => (
-                            <div key={sDay.day} className="mb-6">
-                                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-3">{daysOfWeekMap[sDay.day]}</h3>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                    {sDay.slots.map(slot => (
-                                        <button 
-                                            key={slot.time}
-                                            onClick={() => slot.available > 0 && setSelectedSlot({ ...slot, day: sDay.day })}
-                                            disabled={slot.available === 0}
-                                            className={`p-4 rounded-lg text-center font-semibold transition-all duration-200 disabled:cursor-not-allowed ${
-                                                slot.available > 0
-                                                ? (selectedSlot?.time === slot.time && selectedSlot?.day === sDay.day ? 'bg-cyan-600 text-white scale-105 shadow-lg' : 'bg-gray-100 dark:bg-gray-700 hover:bg-cyan-100 dark:hover:bg-cyan-900')
-                                                : 'bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 line-through flex items-center justify-center gap-2'
-                                            }`}
-                                        >
-                                            {slot.available === 0 && <IconCalendarX />}
-                                            {slot.time} ({slot.available}/{slot.capacity})
-                                        </button>
-                                    ))}
-                                </div>
+                        {/* Date Picker */}
+                        <div className="mb-6">
+                            <label htmlFor="date-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
+                                Selecionar Data:
+                            </label>
+                            <Input 
+                                id="date-select"
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="w-full sm:w-auto"
+                            />
+                        </div>
+
+                        {currentDaySlots.length > 0 ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                {currentDaySlots.map(slot => (
+                                    <button 
+                                        key={slot.id}
+                                        onClick={() => setSelectedSlot(slot)}
+                                        className={`p-4 rounded-lg text-center font-semibold transition-all duration-200 disabled:cursor-not-allowed ${
+                                            selectedSlot?.id === slot.id ? 'bg-cyan-600 text-white scale-105 shadow-lg' : 'bg-gray-100 dark:bg-gray-700 hover:bg-cyan-100 dark:hover:bg-cyan-900'
+                                        }`}
+                                    >
+                                        {new Date(slot.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </button>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <p className="text-center text-gray-600 dark:text-gray-400">Nenhum horário disponível para a data selecionada.</p>
+                        )}
                     </div>
                 )}
 
-                {selectedSlot && (
+                {selectedSlot && !isBookingConfirmed && (
                     <BookingForm 
                         selectedSlot={selectedSlot}
                         onBookingConfirm={handleBookingConfirm}
                     />
+                )}
+
+                {isBookingConfirmed && (
+                    <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg animate-fade-in text-center">
+                        <IconCircleCheck className="text-green-500 text-6xl mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Agendamento Confirmado!</h3>
+                        <p className="text-gray-600 dark:text-gray-400">
+                            Seu agendamento para {selectedService.name} em {new Date(selectedSlot.startAt).toLocaleString()} foi realizado com sucesso.
+                        </p>
+                        <Button onClick={() => { setBookingConfirmed(false); setSelectedService(null); setAvailableSlots({}); navigate('/appointments'); }} className="mt-6">
+                            Ver Meus Agendamentos
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -225,7 +316,7 @@ const Scheduling = () => {
                 isOpen={showClientDetailsModal} 
                 onClose={() => setShowClientDetailsModal(false)} 
                 onSaveDetails={handleSaveClientDetails} 
-                initialData={user || tempRegisteredUser} // Pre-fill with existing user data if available
+                initialData={user || tempRegisteredUser} 
             />
         </div>
     );

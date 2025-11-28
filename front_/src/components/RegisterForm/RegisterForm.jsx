@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Input from '../Form/Input';
 import Button from '../Form/Button';
 import { IconUser, IconMail, IconLock, IconPhone } from '../Icons';
 import api from '../../services/api'; // Import the API instance
 import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
 import { toast } from 'react-toastify'; // Import toast
 
 const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
@@ -14,10 +14,24 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
     password: '',
     phone: '',
     role: 'CLIENT', // Default role to CLIENT
+    referralCode: '', // Add referralCode to formData
   });
 
   const { login } = useAuth(); // Get login function from AuthContext
   const navigate = useNavigate(); // Get navigate function
+  const location = useLocation(); // Get location object
+
+  // Effect to extract referral code from URL on component mount
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        referralCode: ref,
+      }));
+    }
+  }, [location]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

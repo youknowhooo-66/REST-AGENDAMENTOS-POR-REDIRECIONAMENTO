@@ -23,10 +23,12 @@ import AvailabilitySlotManagementPage from './pages/Provider/AvailabilitySlotMan
 import PublicServiceListPage from './pages/Public/PublicServiceListPage'; // NOVO
 import ServiceDetailPage from './pages/Public/ServiceDetailPage'; // NOVO
 import ClientProfilePage from './pages/Client/ClientProfilePage'; // NOVO
+import ClientBookingPage from './pages/Client/ClientBookingPage'; // NOVO - Página de agendamento
 import AppointmentList from './pages/AppointmentList/AppointmentList';
 import AppointmentDetail from './pages/AppointmentDetail/AppointmentDetail';
 import AppointmentFormPage from './pages/AppointmentForm/AppointmentForm';
 import AppointmentCreator from './pages/Admin/AppointmentCreator';
+import BookingManagementPage from './pages/Provider/BookingManagementPage'; // NOVO
 
 function App() {
   return (
@@ -38,10 +40,10 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/schedule" element={<Scheduling />} />
-            <Route path="/cancel/:token" element={<Cancellation />} />
+            <Route path="/cancel" element={<Cancellation />} />
             <Route path="/public/services" element={<PublicServiceListPage />} /> {/* Nova rota pública */}
             <Route path="/public/services/:id" element={<ServiceDetailPage />} /> {/* Nova rota pública */}
-            <Route 
+            <Route
               path="/"
               element={
                 <PrivateRoute>
@@ -51,12 +53,14 @@ function App() {
             >
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="profile" element={<ClientProfilePage />} /> {/* Nova rota para Perfil */}
+              <Route path="client/booking" element={<ClientBookingPage />} /> {/* Nova rota para Agendamento */}
               <Route path="users" element={<UserList />} />
               <Route path="users/:id" element={<UserProfile />} />
               {/* Rotas de serviço consolidadas em ServiceManagementPage */}
-              <Route path="provider/services" element={<ServiceManagementPage />} /> 
+              <Route path="provider/services" element={<ServiceManagementPage />} />
               <Route path="provider/staff" element={<StaffManagementPage />} /> {/* Nova rota para Staff */}
               <Route path="provider/slots" element={<AvailabilitySlotManagementPage />} /> {/* Nova rota para Horários */}
+              <Route path="provider/bookings" element={<BookingManagementPage />} /> {/* Nova rota para Gerenciar Agendamentos */}
               {/* <Route path="services" element={<ServiceList />} /> */}
               {/* <Route path="services/:id" element={<ServiceDetail />} /> */}
               {/* <Route path="services/form" element={<ServiceFormPage />} /> */}
@@ -68,7 +72,7 @@ function App() {
             </Route>
           </Routes>
         </Router>
-        <ToastContainer 
+        <ToastContainer
           position="bottom-right"
           theme="colored"
         />

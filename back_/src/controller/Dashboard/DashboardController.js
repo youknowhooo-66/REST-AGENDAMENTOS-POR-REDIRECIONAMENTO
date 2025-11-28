@@ -12,7 +12,7 @@ class DashboardController {
         return provider ? provider.id : null;
     }
 
-    async getProviderStats(req, res) {
+    getProviderStats = async (req, res) => {
         const { userId, role } = req.user;
 
         if (role !== Role.PROVIDER) {
@@ -98,6 +98,32 @@ class DashboardController {
                 bookings: serviceCounts[name],
             }));
 
+            // Bookings by Period (e.g., last 7 days)
+            const bookingsByPeriod = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const start = new Date(date);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(date);
+                end.setHours(23, 59, 59, 999);
+
+                const count = await prisma.booking.count({
+                    where: {
+                        slot: {
+                            providerId: providerId,
+                            startAt: { gte: start, lte: end },
+                        },
+                        status: BookingStatus.CONFIRMED,
+                    },
+                });
+
+                bookingsByPeriod.push({
+                    date: date.toISOString().split('T')[0], // YYYY-MM-DD
+                    bookings: count,
+                });
+            }
+
 
             res.status(200).json({
                 totalServices,
@@ -106,11 +132,79 @@ class DashboardController {
                 totalConfirmedBookings,
                 bookingsToday,
                 bookingsByService: chartData,
+                bookingsByPeriod: bookingsByPeriod,
             });
 
         } catch (error) {
             console.error('Erro ao buscar estatísticas do dashboard do provedor:', error);
             res.status(500).json({ error: 'Erro interno do servidor ao buscar estatísticas do dashboard.' });
+        }
+    }
+
+    getUpcomingAppointments = async (req, res) => {
+        const { userId, role } = req.user;
+
+        if (role !== Role.PROVIDER) {
+            return res.status(403).json({ error: 'Apenas provedores podem acessar agendamentos futuros.' });
+        }
+
+        try {
+            const providerId = await this.getProviderId(userId);
+            if (!providerId) {
+                return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
+            }
+
+            const now = new Date();
+
+            const upcomingAppointments = await prisma.booking.findMany({
+                where: {
+                    slot: {
+                        providerId: providerId,
+                        startAt: {
+                            gte: now,
+                        },
+                    },
+                    status: BookingStatus.CONFIRMED,
+                },
+                orderBy: {
+                    slot: {
+                        startAt: 'asc',
+                    },
+                },
+                select: {
+                    id: true,
+                    status: true,
+                    user: {
+                        select: {
+                            name: true,
+                            email: true,
+                        },
+                    },
+                    slot: {
+                        select: {
+                            startAt: true,
+                            endAt: true,
+                            service: {
+                                select: {
+                                    name: true,
+                                },
+                            },
+                            staff: {
+                                select: {
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                take: 5, // Limit to 5 upcoming appointments for the dashboard view
+            });
+
+            return res.status(200).json(upcomingAppointments);
+
+        } catch (error) {
+            console.error('Erro ao buscar próximos agendamentos:', error);
+            res.status(500).json({ error: 'Erro interno do servidor ao buscar próximos agendamentos.' });
         }
     }
 }

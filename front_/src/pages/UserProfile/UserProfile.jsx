@@ -1,27 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import api from '../../services/api';
 import UserForm from '../../components/UserForm/UserForm';
+import { AuthContext } from '../../contexts/AuthContext';
 
 const UserProfile = () => {
-  const { id } = useParams();
+  const { user: authUser, setUser: setAuthUser } = useContext(AuthContext);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!authUser) {
+        setLoading(false);
+        setError("Usuário não autenticado.");
+        return;
+      }
       try {
-        // TODO: Replace with actual API call to get user by ID
-        const response = await new Promise(resolve => setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({ id: id, name: 'John Doe', email: 'john@example.com', phone: '123-456-7890', role: 'CLIENT' })
-        }), 1000));
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        const data = await response.json();
-        setUser(data);
+        const response = await api.get(`/users/${authUser.id}`);
+        setUser(response.data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -30,12 +27,16 @@ const UserProfile = () => {
     };
 
     fetchUser();
-  }, [id]);
+  }, [authUser]);
 
-  const handleUpdate = (updatedUserData) => {
-    console.log('Updating user:', updatedUserData);
-    // TODO: Implement API call to update user
-    setUser(updatedUserData); // Optimistic update
+  const handleUpdate = async (updatedUserData) => {
+    try {
+      const response = await api.put(`/users/${authUser.id}`, updatedUserData);
+      setUser(response.data);
+      setAuthUser(response.data); // Update auth context as well
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   if (loading) return <div className="text-center p-4">Carregando perfil do usuário...</div>;

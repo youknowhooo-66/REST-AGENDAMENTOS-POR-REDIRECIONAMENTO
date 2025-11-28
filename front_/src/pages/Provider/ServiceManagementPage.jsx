@@ -3,18 +3,22 @@ import api from '../../services/api';
 import { toast } from 'react-toastify';
 import Modal from '../../components/Modal/Modal';
 import ServiceForm from '../../components/ServiceForm/ServiceForm';
-import { IconEdit, IconTrash, IconPlus } from '../../components/Icons';
+import { IconEdit, IconTrash, IconPlus, IconSearch } from '../../components/Icons';
+import Input from '../../components/Form/Input'; // Assuming you have a generic Input component
 
 const ServiceManagementPage = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingService, setEditingService] = useState(null); // Service data for editing
+  const [editingService, setEditingService] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchServices = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/services');
+      const query = searchTerm ? `?search=${searchTerm}` : '';
+      const response = await api.get(`/services${query}`);
       setServices(response.data);
     } catch (err) {
       console.error('Erro ao buscar serviços:', err);
@@ -27,10 +31,10 @@ const ServiceManagementPage = () => {
 
   useEffect(() => {
     fetchServices();
-  }, []);
+  }, [searchTerm]); // Re-fetch services when searchTerm changes
 
   const handleCreateService = () => {
-    setEditingService(null); // Clear any editing data
+    setEditingService(null);
     setIsModalOpen(true);
   };
 
@@ -44,7 +48,7 @@ const ServiceManagementPage = () => {
       try {
         await api.delete(`/services/${serviceId}`);
         toast.success('Serviço deletado com sucesso!');
-        fetchServices(); // Refresh the list
+        fetchServices();
       } catch (err) {
         console.error('Erro ao deletar serviço:', err);
         toast.error('Erro ao deletar serviço.');
@@ -62,7 +66,7 @@ const ServiceManagementPage = () => {
         toast.success('Serviço criado com sucesso!');
       }
       setIsModalOpen(false);
-      fetchServices(); // Refresh the list
+      fetchServices();
     } catch (err) {
       console.error('Erro ao salvar serviço:', err);
       const errorMessage = err.response?.data?.error || 'Erro ao salvar serviço.';
@@ -75,17 +79,27 @@ const ServiceManagementPage = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-text">Gerenciar Serviços</h1>
-        <button
-          onClick={handleCreateService}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <IconPlus size={20} /> Novo Serviço
-        </button>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-text mb-4 sm:mb-0">Gerenciar Serviços</h1>
+        <div className="flex items-center space-x-4">
+          <Input
+            type="text"
+            placeholder="Buscar serviço..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={<IconSearch />}
+            className="w-full sm:w-auto"
+          />
+          <button
+            onClick={handleCreateService}
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
+          >
+            <IconPlus size={20} /> Novo Serviço
+          </button>
+        </div>
       </div>
 
-      {services.length === 0 ? (
+      {services.length === 0 && !searchTerm ? (
         <div className="text-center text-text-muted p-8 border border-border rounded-lg">
           <p className="mb-4">Nenhum serviço cadastrado ainda.</p>
           <button
@@ -94,6 +108,10 @@ const ServiceManagementPage = () => {
           >
             Criar Primeiro Serviço
           </button>
+        </div>
+      ) : services.length === 0 && searchTerm ? (
+        <div className="text-center text-text-muted p-8 border border-border rounded-lg">
+          <p>Nenhum serviço encontrado para "{searchTerm}".</p>
         </div>
       ) : (
         <div className="overflow-x-auto bg-card rounded-lg shadow-md">

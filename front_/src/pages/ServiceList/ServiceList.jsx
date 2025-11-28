@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import api from '../../services/api';
 import ServiceCard from '../../components/ServiceCard/ServiceCard'; // Assuming ServiceCard exists
 
 const ServiceList = () => {
@@ -9,21 +10,8 @@ const ServiceList = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        // TODO: Replace with actual API call
-        const response = await new Promise(resolve => setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve([
-            { id: 1, name: 'Haircut', price: 25.00, durationMin: 30 },
-            { id: 2, name: 'Manicure', price: 30.00, durationMin: 45 },
-            { id: 3, name: 'Pedicure', price: 40.00, durationMin: 60 },
-          ])
-        }), 1000));
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch services');
-        }
-        const data = await response.json();
-        setServices(data);
+        const response = await api.get('/public/services');
+        setServices(response.data);
       } catch (err) {
         setError(err.message);
       } finally {

@@ -1,86 +1,78 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import api from '../../services/api';
+import { toast } from 'react-toastify';
 import { IconCircleCheck, IconAlertTriangle, IconLoader } from '../../components/Icons';
-import api from '../../services/api'; // Import the API instance
 
 const Cancellation = () => {
-    const { token } = useParams();
-    const navigate = useNavigate();
-    const [status, setStatus] = useState('idle'); // idle, confirming, confirmed, error
-    const [errorMessage, setErrorMessage] = useState('');
+  const location = useLocation();
+  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
+  const [message, setMessage] = useState('Processando seu cancelamento...');
 
-    // Automatically start cancellation process if token is present
-    useEffect(() => {
-        if (token) {
-            handleConfirmCancellation();
-        } else {
-            setStatus('error');
-            setErrorMessage('Nenhum token de cancelamento fornecido.');
-        }
-    }, [token]);
+  useEffect(() => {
+    const cancelBooking = async () => {
+      const params = new URLSearchParams(location.search);
+      const token = params.get('token');
 
-    const handleConfirmCancellation = async () => {
-        setStatus('confirming');
-        try {
-            const response = await api.get(`/bookings/cancel?token=${token}`);
-            if (response.status === 200) {
-                setStatus('confirmed');
-                setTimeout(() => navigate('/'), 3000); // Redirect after 3 seconds
-            }
-        } catch (err) {
-            console.error('Erro ao cancelar agendamento:', err);
-            const message = err.response?.data?.message || 'Não foi possível processar o cancelamento.';
-            setErrorMessage(message);
-            setStatus('error');
-        }
+      if (!token) {
+        setStatus('error');
+        setMessage('Token de cancelamento não encontrado na URL.');
+        toast.error('Token de cancelamento não encontrado.');
+        return;
+      }
+
+      try {
+        await api.post(`/bookings/cancel-by-token`, { token });
+        setStatus('success');
+        setMessage('Seu agendamento foi cancelado com sucesso!');
+        toast.success('Agendamento cancelado com sucesso!');
+      } catch (err) {
+        setStatus('error');
+        const errorMessage = err.response?.data?.message || 'Erro ao cancelar agendamento. O token pode ser inválido ou ter expirado.';
+        setMessage(errorMessage);
+        toast.error(errorMessage);
+      }
     };
 
-    const renderContent = () => {
-        switch (status) {
-            case 'confirmed':
-                return (
-                    <div className="text-center text-green-500 animate-fade-in">
-                        <IconCircleCheck size={64} className="mx-auto mb-4" />
-                        <h2 className="text-3xl font-bold">Agendamento Cancelado!</h2>
-                        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Sua vaga foi liberada. Redirecionando...</p>
-                    </div>
-                );
-            case 'error':
-                return (
-                    <div className="text-center text-red-500 animate-fade-in">
-                        <IconAlertTriangle size={64} className="mx-auto mb-4" />
-                        <h2 className="text-3xl font-bold">Erro no Cancelamento</h2>
-                        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">{errorMessage}</p>
-                    </div>
-                );
-            case 'confirming':
-                return (
-                    <div className="text-center">
-                        <IconLoader size={64} className="mx-auto mb-4 animate-spin text-cyan-500" />
-                        <h2 className="text-3xl font-bold">Cancelando...</h2>
-                        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Aguarde enquanto processamos sua solicitação.</p>
-                    </div>
-                );
-            case 'idle':
-            default:
-                // This state is now less likely to be seen by the user due to useEffect
-                return (
-                    <div className="text-center animate-fade-in">
-                        <IconLoader size={64} className="mx-auto mb-4 animate-spin text-cyan-500" />
-                        <h2 className="text-3xl font-bold">Processando...</h2>
-                        <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Validando seu link de cancelamento.</p>
-                    </div>
-                );
-        }
-    };
+    cancelBooking();
+  }, [location]);
 
-    return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 flex items-center justify-center p-4">
-            <div className="max-w-lg w-full bg-white dark:bg-gray-800 p-10 rounded-xl shadow-lg">
-                {renderContent()}
-            </div>
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+        {status === 'loading' && (
+          <>
+            <IconLoader className="animate-spin text-blue-500 w-16 h-16 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Cancelando Agendamento</h2>
+            <p className="text-gray-600 dark:text-gray-300">{message}</p>
+          </>
+        )}
+        {status === 'success' && (
+          <>
+            <IconCircleCheck className="text-green-500 w-16 h-16 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Sucesso!</h2>
+            <p className="text-gray-600 dark:text-gray-300">{message}</p>
+          </>
+        )}
+        {status === 'error' && (
+          <>
+            <IconAlertTriangle className="text-red-500 w-16 h-16 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Erro</h2>
+            <p className="text-gray-600 dark:text-gray-300">{message}</p>
+          </>
+        )}
+        <p className="mt-6 text-gray-500 dark:text-gray-400 text-sm">
+          Você pode fechar esta página ou retornar à página inicial.
+        </p>
+        <button
+          onClick={() => window.location.href = '/'}
+          className="mt-4 px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150"
+        >
+          Ir para a Página Inicial
+        </button>
+      </div>
+    </div>
+  );
 };
 
 export default Cancellation;

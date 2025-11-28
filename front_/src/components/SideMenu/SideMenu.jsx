@@ -2,10 +2,10 @@ import { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
-import { 
-    IconDashboard, 
-    IconCalendarCheck, 
-    IconUsers, 
+import {
+    IconDashboard,
+    IconCalendarCheck,
+    IconUsers,
     IconLogOut,
     IconClose,
     IconTicket,
@@ -22,8 +22,7 @@ const MenuItem = ({ to, icon, children, isCollapsed }) => (
         <NavLink
             to={to}
             className={({ isActive }) =>
-                `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
-                isActive
+                `flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${isActive
                     ? 'bg-primary text-primary-foreground shadow-lg'
                     : 'text-text-muted hover:bg-muted hover:text-text'
                 }`
@@ -50,16 +49,15 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
     return (
         <>
             {/* Overlay for mobile */}
-            <div 
+            <div
                 className={`fixed inset-0 bg-black/60 z-30 md:hidden ${isCollapsed ? 'hidden' : 'block'}`}
                 onClick={toggleMenu}
             ></div>
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 h-full bg-background border-r border-border text-text flex flex-col transition-all duration-300 ease-in-out z-40 ${
-                    isCollapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-64'
-                }`}
+                className={`fixed top-0 left-0 h-full bg-background border-r border-border text-text flex flex-col transition-all duration-300 ease-in-out z-40 ${isCollapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-64'
+                    }`}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-border">
@@ -86,6 +84,20 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
                         <MenuItem to="/profile" icon={<IconUser size={20} />} isCollapsed={isCollapsed}>
                             Meu Perfil
                         </MenuItem>
+
+                        {/* Menu específico para CLIENTES */}
+                        {user && user.role === 'CLIENT' && (
+                            <>
+                                <MenuItem to="/client/booking" icon={<IconCalendarCheck size={20} />} isCollapsed={isCollapsed}>
+                                    Agendar Serviço
+                                </MenuItem>
+                                <MenuItem to="/appointments" icon={<IconClock size={20} />} isCollapsed={isCollapsed}>
+                                    Meus Agendamentos
+                                </MenuItem>
+                            </>
+                        )}
+
+                        {/* Menu específico para FORNECEDORES */}
                         {user && user.role === 'PROVIDER' && (
                             <>
                                 <MenuItem to="/provider/services" icon={<IconBriefcase size={20} />} isCollapsed={isCollapsed}>
@@ -97,14 +109,18 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
                                 <MenuItem to="/provider/slots" icon={<IconClock size={20} />} isCollapsed={isCollapsed}>
                                     Horários
                                 </MenuItem>
+                                <MenuItem to="/appointments" icon={<IconCalendarCheck size={20} />} isCollapsed={isCollapsed}>
+                                    Agendamentos
+                                </MenuItem>
                             </>
                         )}
-                        <MenuItem to="/appointments" icon={<IconCalendarCheck size={20} />} isCollapsed={isCollapsed}>
-                            Agendamentos
-                        </MenuItem>
-                        <MenuItem to="/users" icon={<IconUsers size={20} />} isCollapsed={isCollapsed}>
-                            Usuários
-                        </MenuItem>
+
+                        {/* Menu de Usuários (pode ficar apenas para Admin se quiser) */}
+                        {user && (user.role === 'ADMIN' || user.role === 'PROVIDER') && (
+                            <MenuItem to="/users" icon={<IconUsers size={20} />} isCollapsed={isCollapsed}>
+                                Usuários
+                            </MenuItem>
+                        )}
                     </ul>
                 </nav>
 

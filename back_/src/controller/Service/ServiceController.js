@@ -46,12 +46,13 @@ class ServiceController {
         }
     }
 
-    // READ (Listar todos)
+    // READ (Listar todos e Buscar)
     async getAll(req, res) {
         const { userId, role } = req.user;
+        const { search } = req.query; // Extract search term
 
         if (role !== Role.PROVIDER) {
-            return res.status(403).json({ error: 'Apenas provedores podem listar serviços.' });
+            return res.status(403).json({ error: 'Apenas provedores podem listar/buscar serviços.' });
         }
 
         try {
@@ -61,45 +62,23 @@ class ServiceController {
 
             if (!provider) {
                 return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
+            }
+
+            let whereClause = { providerId: provider.id };
+
+            if (search) {
+                whereClause.name = {
+                    contains: search,
+                    mode: 'insensitive', // Case-insensitive search
+                };
             }
 
             const services = await prisma.service.findMany({
-                where: { providerId: provider.id },
+                where: whereClause,
             });
             return res.status(200).json(services);
         } catch (error) {
-            console.error('Erro ao listar serviços:', error);
-            return res.status(500).json({ error: 'Erro interno do servidor.' });
-        }
-    }
-
-    // READ (Buscar por ID)
-    async getById(req, res) {
-        const { id } = req.params;
-        const { userId, role } = req.user;
-
-        if (role !== Role.PROVIDER) {
-            return res.status(403).json({ error: 'Apenas provedores podem visualizar serviços.' });
-        }
-
-        try {
-            const provider = await prisma.provider.findFirst({
-                where: { ownerId: userId },
-            });
-
-            if (!provider) {
-                return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
-            }
-
-            const service = await prisma.service.findUnique({
-                where: { id: parseInt(id), providerId: provider.id },
-            });
-            if (!service) {
-                return res.status(404).json({ error: 'Serviço não encontrado ou não pertence a este provedor.' });
-            }
-            return res.status(200).json(service);
-        } catch (error) {
-             console.error('Erro ao buscar serviço:', error);
+            console.error('Erro ao listar/buscar serviços:', error);
             return res.status(500).json({ error: 'Erro interno do servidor.' });
         }
     }
@@ -197,42 +176,7 @@ class ServiceController {
         }
     }
 
-    // SEARCH
-    async search(req, res) {
-        const { name } = req.query; // Get search term from query parameters
-        const { userId, role } = req.user;
 
-        if (role !== Role.PROVIDER) {
-            return res.status(403).json({ error: 'Apenas provedores podem buscar serviços.' });
-        }
-
-        if (!name) {
-            return res.status(400).json({ error: 'O parâmetro "name" é obrigatório para a busca.' });
-        }
-        try {
-            const provider = await prisma.provider.findFirst({
-                where: { ownerId: userId },
-            });
-
-            if (!provider) {
-                return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
-            }
-
-            const services = await prisma.service.findMany({
-                where: {
-                    providerId: provider.id,
-                    name: {
-                        contains: name,
-                        mode: 'insensitive', // Case-insensitive search
-                    },
-                },
-            });
-            return res.status(200).json(services);
-        } catch (error) {
-            console.error('Erro ao buscar serviços:', error);
-            return res.status(500).json({ error: 'Erro interno do servidor ao buscar serviços.' });
-        }
-    }
 }
 
 export const serviceController = new ServiceController();

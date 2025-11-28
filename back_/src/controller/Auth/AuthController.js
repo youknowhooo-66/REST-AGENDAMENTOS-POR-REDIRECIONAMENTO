@@ -20,7 +20,7 @@ class AuthController {
         res
     ) {
         try {
-            const { email, password, name, role } = req.body; 
+            const { email, password, name, role, referralCode } = req.body; 
             
             if (!email || !password) { // Name is now optional for initial registration
                 return res.status(400).json({ error: "Email e senha são obrigatórios" });
@@ -42,10 +42,21 @@ class AuthController {
                     email, 
                     password: hashedPassword, 
                     name: name || 'Novo Cliente', // Provide a default name if not supplied
-                    role: role && role.toUpperCase() in Role ? role.toUpperCase() : Role.CLIENT, 
+                    role: role && role.toUpperCase() in Role ? role.toUpperCase() : Role.CLIENT,
+                    referralCode: referralCode || null, // Store referralCode if provided
                 },
                 select: { id: true, email: true, name: true, role: true },
             });
+
+            // Se o usuário for um PROVEDOR, criar automaticamente o registro na tabela Provider
+            if (user.role === Role.PROVIDER) {
+                await prisma.provider.create({
+                    data: {
+                        name: user.name,
+                        ownerId: user.id,
+                    },
+                });
+            }
             
             return res.status(201).json(user);
         } catch (error) {

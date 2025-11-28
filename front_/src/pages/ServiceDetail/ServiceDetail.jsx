@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import api from '../../services/api';
+import { AuthContext } from '../../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const ServiceDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,17 +15,9 @@ const ServiceDetail = () => {
   useEffect(() => {
     const fetchService = async () => {
       try {
-        // TODO: Replace with actual API call to get service by ID
-        const response = await new Promise(resolve => setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({ id: id, name: 'Haircut', price: 25.00, durationMin: 30, description: 'A professional haircut tailored to your style.' })
-        }), 1000));
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch service');
-        }
-        const data = await response.json();
-        setService(data);
+        // The service detail is public, but we need to check the user role to show the edit/delete buttons.
+        const response = await api.get(`/public/services/${id}`);
+        setService(response.data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -30,6 +27,20 @@ const ServiceDetail = () => {
 
     fetchService();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (window.confirm('Tem certeza que deseja excluir este serviço?')) {
+      try {
+        await api.delete(`/services/${id}`);
+        toast.success('Serviço excluído com sucesso!');
+        navigate('/services');
+      } catch (error) {
+        toast.error('Erro ao excluir o serviço.');
+        console.error('Error deleting service:', error);
+      }
+    }
+  };
+
 
   if (loading) return <div className="text-center p-4">Carregando detalhes do serviço...</div>;
   if (error) return <div className="text-center p-4 text-red-500">Erro: {error}</div>;
@@ -45,12 +56,24 @@ const ServiceDetail = () => {
         <span className="font-semibold">Duração:</span> {service.durationMin} minutos
       </p>
       <p className="text-gray-700 mb-4">
-        <span className="font-semibold">Descrição:</span> {service.description}
+        <span className="font-semibold">Descrição:</span> {service.description || 'N/A'}
       </p>
-      {/* Add a button to book this service or other actions */}
-      <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        Agendar Agora
-      </button>
+      
+      <div className="flex space-x-4">
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Agendar Agora
+        </button>
+        {user && user.role === 'PROVIDER' && (
+          <>
+            <Link to={`/admin/services/edit/${id}`} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+              Editar
+            </Link>
+            <button onClick={handleDelete} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              Deletar
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };

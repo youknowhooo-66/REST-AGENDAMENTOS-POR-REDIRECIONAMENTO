@@ -29,8 +29,12 @@ const ClientProfilePage = () => {
       }
     };
 
-    if (user) {
+    if (user && user.role === 'CLIENT') { // Only fetch bookings if the user is a client
       fetchBookings();
+    } else if (user && user.role !== 'CLIENT') {
+        // If it's a provider or admin, they shouldn't see "My Bookings" in this context
+        setBookings([]); // Ensure bookings list is empty
+        setLoading(false); // Stop loading state
     }
   }, [user]);
 

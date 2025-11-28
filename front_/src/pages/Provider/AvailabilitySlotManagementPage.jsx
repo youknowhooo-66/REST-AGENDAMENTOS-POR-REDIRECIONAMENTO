@@ -4,7 +4,9 @@ import { toast } from 'react-toastify';
 import Modal from '../../components/Modal/Modal';
 import Input from '../../components/Form/Input';
 import Button from '../../components/Form/Button';
-import { IconEdit, IconTrash, IconPlus, IconCalendar, IconClock } from '../../components/Icons';
+import { IconEdit, IconTrash, IconPlus, IconCalendar, IconClock, IconBolt, IconTable } from '../../components/Icons';
+import BulkSlotCreator from '../../components/BulkSlotCreator/BulkSlotCreator';
+import CalendarView from '../../components/CalendarView/CalendarView'; // Import CalendarView
 
 // AvailabilitySlotForm component for creating/editing slots
 const AvailabilitySlotForm = ({ slotData, onSubmit, onClose, staffList, serviceList }) => {
@@ -90,7 +92,7 @@ const AvailabilitySlotForm = ({ slotData, onSubmit, onClose, staffList, serviceL
           onChange={handleChange}
           required
         />
-        
+
         <Button type="submit" fullWidth>
           {slotData ? 'Atualizar Horário' : 'Criar Horário'}
         </Button>
@@ -110,7 +112,9 @@ const AvailabilitySlotManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false); // Modal for bulk creation
   const [editingSlot, setEditingSlot] = useState(null); // Slot data for editing
+  const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
 
   const fetchDependencies = async () => {
     try {
@@ -147,6 +151,10 @@ const AvailabilitySlotManagementPage = () => {
   const handleCreateSlot = () => {
     setEditingSlot(null); // Clear any editing data
     setIsModalOpen(true);
+  };
+
+  const handleCreateBulkSlots = () => {
+    setIsBulkModalOpen(true);
   };
 
   const handleEditSlot = (slot) => {
@@ -191,96 +199,131 @@ const AvailabilitySlotManagementPage = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-text">Gerenciar Horários de Disponibilidade</h1>
-        <button
-          onClick={handleCreateSlot}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
-        >
-          <IconPlus size={20} /> Novo Horário
-        </button>
-      </div>
-
-      {slots.length === 0 ? (
-        <div className="text-center text-text-muted p-8 border border-border rounded-lg">
-          <p className="mb-4">Nenhum horário de disponibilidade cadastrado ainda.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-text mb-4 sm:mb-0">Gerenciar Horários de Disponibilidade</h1>
+        <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+              }`}
+            >
+              <IconTable size={20} /> Tabela
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                viewMode === 'calendar'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+              }`}
+            >
+              <IconCalendar size={20} /> Calendário
+            </button>
+          <button
+            onClick={handleCreateBulkSlots}
+            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-secondary/90 transition-colors"
+          >
+            <IconBolt size={20} /> Criar em Lote
+          </button>
           <button
             onClick={handleCreateSlot}
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors"
           >
-            Criar Primeiro Horário
+            <IconPlus size={20} /> Novo Horário
           </button>
         </div>
-      ) : (
-        <div className="overflow-x-auto bg-card rounded-lg shadow-md">
-          <table className="min-w-full divide-y divide-border">
-            <thead className="bg-muted">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
-                  Serviço
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
-                  Funcionário
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
-                  Início
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
-                  Fim
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Ações</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-card divide-y divide-border">
-              {slots.map((slot) => (
-                <tr key={slot.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
-                    {slot.service ? slot.service.name : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
-                    {slot.staff ? slot.staff.name : 'Nenhum'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
-                    {new Date(slot.startAt).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
-                    {new Date(slot.endAt).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      slot.status === 'OPEN' ? 'bg-green-100 text-green-800' :
-                      slot.status === 'BOOKED' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {slot.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEditSlot(slot)}
-                      className="text-primary hover:text-primary/80 mr-3"
-                      title="Editar"
-                    >
-                      <IconEdit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSlot(slot.id)}
-                      className="text-destructive hover:text-destructive/80"
-                      title="Deletar"
-                    >
-                      <IconTrash size={18} />
-                    </button>
-                  </td>
+      </div>
+
+      {viewMode === 'table' ? (
+        slots.length === 0 ? (
+          <div className="text-center text-text-muted p-8 border border-border rounded-lg">
+            <p className="mb-4">Nenhum horário de disponibilidade cadastrado ainda.</p>
+            <button
+              onClick={handleCreateSlot}
+              className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
+            >
+              Criar Primeiro Horário
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-card rounded-lg shadow-md">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Serviço
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Funcionário
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Início
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Fim
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">Ações</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-card divide-y divide-border">
+                {slots.map((slot) => (
+                  <tr key={slot.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
+                      {slot.service ? slot.service.name : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
+                      {slot.staff ? slot.staff.name : 'Nenhum'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
+                      {new Date(slot.startAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
+                      {new Date(slot.endAt).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${slot.status === 'OPEN' ? 'bg-green-100 text-green-800' :
+                          slot.status === 'BOOKED' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
+                        {slot.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEditSlot(slot)}
+                        className="text-primary hover:text-primary/80 mr-3"
+                        title="Editar"
+                      >
+                        <IconEdit size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSlot(slot.id)}
+                        className="text-destructive hover:text-destructive/80"
+                        title="Deletar"
+                      >
+                        <IconTrash size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : (
+        <CalendarView
+          slots={slots}
+          onEditSlot={handleEditSlot}
+          onDeleteSlot={handleDeleteSlot}
+        />
       )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
@@ -290,6 +333,15 @@ const AvailabilitySlotManagementPage = () => {
           onClose={() => setIsModalOpen(false)}
           staffList={staffList}
           serviceList={serviceList}
+        />
+      </Modal>
+
+      <Modal isOpen={isBulkModalOpen} onClose={() => setIsBulkModalOpen(false)}>
+        <BulkSlotCreator
+          onClose={() => setIsBulkModalOpen(false)}
+          staffList={staffList}
+          serviceList={serviceList}
+          onSuccess={fetchSlots}
         />
       </Modal>
     </div>

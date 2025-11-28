@@ -1,4 +1,4 @@
-import  {prisma}  from '../../config/prismaClient.js';
+import { prisma } from '../../config/prismaClient.js';
 import pkg from '@prisma/client';
 const { Role, SlotStatus } = pkg;
 
@@ -78,12 +78,108 @@ class AvailabilitySlotController {
                     startAt: parsedStartAt,
                     endAt: parsedEndAt,
                     status: SlotStatus.OPEN,
+                    userId: userId,
                 },
             });
             return res.status(201).json(newSlot);
         } catch (error) {
             console.error('Erro ao criar horário de disponibilidade:', error);
             return res.status(500).json({ error: 'Erro interno do servidor ao criar horário de disponibilidade.' });
+        }
+    }
+
+    // CREATE BULK: Create multiple availability slots at once
+    async createBulk(req, res) {
+        const { serviceId, staffId, startDate, endDate, daysOfWeek, timeSlots } = req.body;
+        const { userId, role } = req.user;
+
+        if (role !== Role.PROVIDER) {
+            return res.status(403).json({ error: 'Apenas provedores podem criar horários de disponibilidade.' });
+        }
+
+        if (!serviceId || !startDate || !endDate || !daysOfWeek || !timeSlots || timeSlots.length === 0) {
+            return res.status(400).json({
+                error: 'ID do serviço, data inicial, data final, dias da semana e horários são obrigatórios.'
+            });
+        }
+
+        try {
+            const providerId = await this.getProviderId(userId);
+            if (!providerId) {
+                return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
+            }
+
+            // Validate service belongs to provider
+            const service = await prisma.service.findUnique({
+                where: { id: serviceId, providerId: providerId },
+            });
+            if (!service) {
+                return res.status(404).json({ error: 'Serviço não encontrado ou não pertence a este provedor.' });
+            }
+
+            // Validate staff belongs to provider (if staffId is provided)
+            if (staffId) {
+                const staff = await prisma.staff.findUnique({
+                    where: { id: staffId, providerId: providerId },
+                });
+                if (!staff) {
+                    return res.status(404).json({ error: 'Funcionário não encontrado ou não pertence a este provedor.' });
+                }
+            }
+
+            // Generate slots
+            const slotsToCreate = [];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+                const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+                if (daysOfWeek.includes(dayOfWeek)) {
+                    for (const timeSlot of timeSlots) {
+                        const [startHour, startMinute] = timeSlot.start.split(':').map(Number);
+                        const [endHour, endMinute] = timeSlot.end.split(':').map(Number);
+
+                        const slotStart = new Date(date);
+                        slotStart.setHours(startHour, startMinute, 0, 0);
+
+                        const slotEnd = new Date(date);
+                        slotEnd.setHours(endHour, endMinute, 0, 0);
+
+                        if (slotStart >= slotEnd) {
+                            continue; // Skip invalid time slots
+                        }
+
+                        slotsToCreate.push({
+                            providerId,
+                            serviceId,
+                            staffId: staffId || null,
+                            startAt: slotStart,
+                            endAt: slotEnd,
+                            status: SlotStatus.OPEN,
+                            userId: userId,
+                        });
+                    }
+                }
+            }
+
+            if (slotsToCreate.length === 0) {
+                return res.status(400).json({ error: 'Nenhum horário válido foi gerado com os parâmetros fornecidos.' });
+            }
+
+            // Create all slots using createMany (skips duplicates due to unique constraint)
+            const result = await prisma.availabilitySlot.createMany({
+                data: slotsToCreate,
+                skipDuplicates: true, // Skip slots that conflict with unique constraint
+            });
+
+            return res.status(201).json({
+                message: `${result.count} horários criados com sucesso.`,
+                count: result.count
+            });
+        } catch (error) {
+            console.error('Erro ao criar horários em lote:', error);
+            return res.status(500).json({ error: 'Erro interno do servidor ao criar horários em lote.' });
         }
     }
 
@@ -185,7 +281,7 @@ class AvailabilitySlotController {
             if (status && status.toUpperCase() === SlotStatus.BOOKED && existingSlot.status !== SlotStatus.BOOKED) {
                 return res.status(400).json({ error: 'Não é possível alterar o status para BOOKED diretamente. Use a API de agendamento.' });
             }
-            
+
             let updateData = {};
             if (serviceId) {
                 const service = await prisma.service.findUnique({ where: { id: serviceId, providerId: providerId } });
@@ -210,7 +306,7 @@ class AvailabilitySlotController {
 
             // Check for overlaps if startAt or endAt are changed
             if (updateData.startAt && updateData.startAt !== existingSlot.startAt) {
-                 const conflict = await prisma.availabilitySlot.findFirst({
+                const conflict = await prisma.availabilitySlot.findFirst({
                     where: {
                         providerId: providerId,
                         startAt: updateData.startAt,

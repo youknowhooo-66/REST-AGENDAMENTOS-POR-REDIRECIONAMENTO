@@ -1,12 +1,16 @@
-import  {prisma}  from '../../config/prismaClient.js'; // Corrected import path
+import { prisma } from '../../config/prismaClient.js'; // Corrected import path
 import { v4 as uuidv4 } from "uuid";
 import { sendCancelEmail } from "../../services/emailService.js"; // Uncommented and corrected import
 import pkg from '@prisma/client';
-const { BookingStatus, SlotStatus } = pkg;
+const { BookingStatus, SlotStatus, Role } = pkg;
 
 export const createBooking = async (req, res) => { // Removed type annotations
-  const userId = req.user.userId; // Use req.user.userId as set by auth middleware
+  const { userId, role } = req.user; // Use req.user.userId as set by auth middleware
   const { slotId } = req.body;
+
+  if (role !== Role.CLIENT) {
+    return res.status(403).json({ error: 'Apenas clientes podem realizar esta ação.' });
+  }
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -109,7 +113,11 @@ export const cancelBooking = async (req, res) => {
 };
 
 export const getClientBookings = async (req, res) => {
-  const { userId } = req.user;
+  const { userId, role } = req.user;
+
+  if (role !== Role.CLIENT) {
+    return res.status(403).json({ error: 'Apenas clientes podem realizar esta ação.' });
+  }
 
   try {
     const bookings = await prisma.booking.findMany({
@@ -133,5 +141,143 @@ export const getClientBookings = async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar agendamentos do cliente:', error);
     return res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+};
+
+export const getProviderBookings = async (req, res) => {
+  const { userId, role } = req.user;
+  const { date, serviceId, staffId } = req.query; // Extract filter parameters
+
+  if (role !== Role.PROVIDER) {
+    return res.status(403).json({ error: 'Apenas provedores podem realizar esta ação.' });
+  }
+
+  try {
+    const provider = await prisma.provider.findFirst({
+      where: { ownerId: userId },
+    });
+
+    if (!provider) {
+      return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
+    }
+
+    let whereClause = {
+      slot: {
+        providerId: provider.id,
+      },
+    };
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      whereClause.slot.startAt = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
+    if (serviceId) {
+      whereClause.slot.serviceId = serviceId;
+    }
+
+    if (staffId) {
+      whereClause.slot.staffId = staffId;
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: whereClause,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        slot: {
+          include: {
+            service: true,
+            staff: true,
+          },
+        },
+      },
+      orderBy: {
+        slot: {
+          startAt: 'desc',
+        },
+      },
+    });
+    return res.status(200).json(bookings);
+  } catch (error) {
+    console.error('Erro ao buscar agendamentos do provedor:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+};
+
+export const providerCancelBooking = async (req, res) => {
+  const { bookingId } = req.params; // Booking ID from URL parameters
+  const { userId, role } = req.user;
+
+  if (role !== Role.PROVIDER) {
+    return res.status(403).json({ error: 'Apenas provedores podem cancelar agendamentos.' });
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Find the provider
+      const provider = await tx.provider.findFirst({
+        where: { ownerId: userId },
+      });
+
+      if (!provider) {
+        throw { status: 404, message: 'Provedor não encontrado para o usuário autenticado.' };
+      }
+
+      // Find the booking and ensure it belongs to this provider
+      const booking = await tx.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+          slot: {
+            select: {
+              providerId: true,
+            },
+          },
+        },
+      });
+
+      if (!booking) {
+        throw { status: 404, message: 'Agendamento não encontrado.' };
+      }
+
+      if (booking.slot.providerId !== provider.id) {
+        throw { status: 403, message: 'Você não tem permissão para cancelar este agendamento.' };
+      }
+
+      if (booking.status === BookingStatus.CANCELLED) {
+        return { message: 'Agendamento já foi cancelado.', booking };
+      }
+
+      // Update booking status to CANCELLED
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: BookingStatus.CANCELLED },
+      });
+
+      // Update slot status to OPEN and unlink bookingId
+      await tx.availabilitySlot.update({
+        where: { id: booking.slotId },
+        data: { status: SlotStatus.OPEN, bookingId: null },
+      });
+
+      return { message: 'Agendamento cancelado com sucesso pelo provedor.', booking };
+    });
+
+    return res.status(200).json({ message: result.message, bookingId: result.booking.id });
+  } catch (err) {
+    const status = err.status || 500;
+    return res.status(status).json({ message: err.message || 'Erro ao cancelar agendamento pelo provedor.' });
   }
 };

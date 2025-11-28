@@ -14,7 +14,7 @@ authRouter.post('/register', authController.register);
 authRouter.post('/login', authController.login);
 
 // Rota Pública: Renovação do Access Token (usando Refresh Token no corpo)
-authRouter.post('/refresh', auth, authController.refresh);
+authRouter.post('/refresh', authController.refresh);
 
 // Rota Pública: Logout (revoga o Refresh Token)
 authRouter.post('/logout', authController.logout);

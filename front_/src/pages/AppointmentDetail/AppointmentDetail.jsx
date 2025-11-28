@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useContext } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import api from '../../services/api';
+import { AuthContext } from '../../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const AppointmentDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useContext(AuthContext); // Get authenticated user from context
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,28 +15,11 @@ const AppointmentDetail = () => {
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
-        // TODO: Replace with actual API call to get appointment by ID
-        const response = await new Promise(resolve => setTimeout(() => resolve({
-          ok: true,
-          json: () => Promise.resolve({
-            id: id,
-            clientId: 1,
-            serviceId: 1,
-            startTime: '2025-11-15T10:00:00Z',
-            endTime: '2025-11-15T10:30:00Z',
-            status: 'PENDING',
-            clientName: 'John Doe',
-            serviceName: 'Haircut',
-          })
-        }), 1000));
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch appointment');
-        }
-        const data = await response.json();
-        setAppointment(data);
+        const response = await api.get(`/appointments/${id}`);
+        setAppointment(response.data);
       } catch (err) {
         setError(err.message);
+        toast.error('Erro ao carregar detalhes do agendamento.');
       } finally {
         setLoading(false);
       }
@@ -39,6 +27,19 @@ const AppointmentDetail = () => {
 
     fetchAppointment();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
+      try {
+        await api.delete(`/appointments/${id}`);
+        toast.success('Agendamento excluído com sucesso!');
+        navigate('/appointments'); // Redirect to appointments list after deletion
+      } catch (error) {
+        toast.error('Erro ao excluir o agendamento.');
+        console.error('Error deleting appointment:', error);
+      }
+    }
+  };
 
   if (loading) return <div className="text-center p-4">Carregando detalhes do agendamento...</div>;
   if (error) return <div className="text-center p-4 text-red-500">Erro: {error}</div>;
@@ -51,10 +52,10 @@ const AppointmentDetail = () => {
         <span className="font-semibold">ID do Agendamento:</span> {appointment.id}
       </p>
       <p className="text-gray-700 mb-2">
-        <span className="font-semibold">Cliente:</span> {appointment.clientName}
+        <span className="font-semibold">Cliente:</span> {appointment.client ? appointment.client.name : 'N/A'}
       </p>
       <p className="text-gray-700 mb-2">
-        <span className="font-semibold">Serviço:</span> {appointment.serviceName}
+        <span className="font-semibold">Serviço:</span> {appointment.service ? appointment.service.name : 'N/A'}
       </p>
       <p className="text-gray-700 mb-2">
         <span className="font-semibold">Início:</span> {new Date(appointment.startTime).toLocaleString()}
@@ -65,14 +66,24 @@ const AppointmentDetail = () => {
       <p className="text-gray-700 mb-4">
         <span className="font-semibold">Status:</span> {appointment.status}
       </p>
-      {/* Add buttons for actions like edit, cancel, confirm (if admin) */}
+      
+      {/* Action Buttons (visible based on user role) */}
       <div className="flex space-x-4">
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Editar Agendamento
-        </button>
-        <button className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-          Cancelar Agendamento
-        </button>
+        {user && (user.role === 'PROVIDER' || user.role === 'ADMIN') && (
+          <>
+            <Link to={`/appointments/edit/${id}`} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Editar Agendamento
+            </Link>
+            <button onClick={handleDelete} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+              Deletar Agendamento
+            </button>
+          </>
+        )}
+        {user && user.role === 'CLIENT' && (
+             <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Reagendar
+            </button>
+        )}
       </div>
     </div>
   );

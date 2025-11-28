@@ -1,76 +1,64 @@
 // back_/src/services/emailService.js
 
 import { env } from '../../env.js'; // Importa as variáveis de ambiente
+import nodemailer from 'nodemailer'; // Import nodemailer
 
-// Função para enviar e-mail de cancelamento
+// Create a Nodemailer transporter
+const transporter = nodemailer.createTransport({
+    host: env.emailHost,
+    port: parseInt(env.emailPort),
+    secure: parseInt(env.emailPort) === 465, // true for 465, false for other ports
+    auth: {
+        user: env.emailUser,
+        pass: env.emailPass,
+    },
+});
+
+// Function to send cancellation email
 export async function sendCancelEmail(recipientEmail, slot, booking, cancelUrl) {
-    console.log('--- SIMULANDO ENVIO DE E-MAIL DE CANCELAMENTO ---');
-    console.log(`Para: ${recipientEmail}`);
-    console.log(`Assunto: Confirmação de Agendamento e Link de Cancelamento`);
-    console.log(`
-        Olá!
-
-        Seu agendamento para o serviço "${slot.service.name}" com o provedor "${slot.provider.name}"
-        no dia ${new Date(slot.startAt).toLocaleString()} foi confirmado.
-
-        Para cancelar este agendamento, clique no link abaixo:
-        ${cancelUrl}
-
-        Este link é válido por 24 horas.
-
-        Obrigado!
-    `);
-    console.log('--------------------------------------------------');
-
-    // Em um ambiente real, você usaria um serviço de e-mail como Nodemailer, SendGrid, Mailgun, etc.
-    // Exemplo com Nodemailer (requer configuração):
-    /*
-    const nodemailer = require('nodemailer');
-    let transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email", // ou seu SMTP real
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-            user: 'seu_email@example.com',
-            pass: 'sua_senha',
-        },
-    });
-
-    let info = await transporter.sendMail({
-        from: '"Seu Serviço de Agendamento" <no-reply@example.com>',
-        to: recipientEmail,
-        subject: "Confirmação de Agendamento e Link de Cancelamento",
-        html: `
-            <p>Olá!</p>
-            <p>Seu agendamento para o serviço "<b>${slot.service.name}</b>" com o provedor "<b>${slot.provider.name}</b>"</p>
-            <p>no dia <b>${new Date(slot.startAt).toLocaleString()}</b> foi confirmado.</p>
-            <p>Para cancelar este agendamento, clique no link abaixo:</p>
-            <p><a href="${cancelUrl}">Cancelar Agendamento</a></p>
-            <p>Este link é válido por 24 horas.</p>
-            <p>Obrigado!</p>
-        `,
-    });
-    console.log("Message sent: %s", info.messageId);
-    */
+    try {
+        let info = await transporter.sendMail({
+            from: env.emailFrom,
+            to: recipientEmail,
+            subject: "Confirmação de Agendamento e Link de Cancelamento",
+            html: `
+                <p>Olá!</p>
+                <p>Seu agendamento para o serviço "<b>${slot.service.name}</b>" com o provedor "<b>${slot.provider.name}</b>"</p>
+                <p>no dia <b>${new Date(slot.startAt).toLocaleString()}</b> foi confirmado.</p>
+                <p>Para cancelar este agendamento, clique no link abaixo:</p>
+                <p><a href="${cancelUrl}">Cancelar Agendamento</a></p>
+                <p>Este link é válido por 24 horas.</p>
+                <p>Obrigado!</p>
+            `,
+        });
+        console.log("Cancellation Email sent: %s", info.messageId);
+    } catch (error) {
+        console.error("Error sending cancellation email:", error);
+    }
 }
 
-// Função para enviar e-mail de confirmação (para uso futuro, se necessário)
+// Function to send confirmation email
 export async function sendConfirmationEmail(recipientEmail, slot, booking) {
-    console.log('--- SIMULANDO ENVIO DE E-MAIL DE CONFIRMAÇÃO ---');
-    console.log(`Para: ${recipientEmail}`);
-    console.log(`Assunto: Agendamento Confirmado!`);
-    console.log(`
-        Olá!
-
-        Seu agendamento para o serviço "${slot.service.name}" com o provedor "${slot.provider.name}"
-        no dia ${new Date(slot.startAt).toLocaleString()} foi confirmado com sucesso.
-
-        Detalhes do Agendamento:
-        Serviço: ${slot.service.name}
-        Provedor: ${slot.provider.name}
-        Data/Hora: ${new Date(slot.startAt).toLocaleString()}
-
-        Obrigado por usar nosso serviço!
-    `);
-    console.log('--------------------------------------------------');
+    try {
+        let info = await transporter.sendMail({
+            from: env.emailFrom,
+            to: recipientEmail,
+            subject: "Agendamento Confirmado!",
+            html: `
+                <p>Olá!</p>
+                <p>Seu agendamento para o serviço "<b>${slot.service.name}</b>" com o provedor "<b>${slot.provider.name}</b>"</p>
+                <p>no dia <b>${new Date(slot.startAt).toLocaleString()}</b> foi confirmado com sucesso.</p>
+                <p>Detalhes do Agendamento:</p>
+                <ul>
+                    <li>Serviço: <b>${slot.service.name}</b></li>
+                    <li>Provedor: <b>${slot.provider.name}</b></li>
+                    <li>Data/Hora: <b>${new Date(slot.startAt).toLocaleString()}</b></li>
+                </ul>
+                <p>Obrigado por usar nosso serviço!</p>
+            `,
+        });
+        console.log("Confirmation Email sent: %s", info.messageId);
+    } catch (error) {
+        console.error("Error sending confirmation email:", error);
+    }
 }

@@ -6,7 +6,6 @@ const UserForm = ({ userData, onSubmit }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     role: '', // Assuming role can also be updated, or displayed
   });
 
@@ -15,7 +14,6 @@ const UserForm = ({ userData, onSubmit }) => {
       setFormData({
         name: userData.name || '',
         email: userData.email || '',
-        phone: userData.phone || '',
         role: userData.role || '',
       });
     }
@@ -49,13 +47,6 @@ const UserForm = ({ userData, onSubmit }) => {
           value={formData.email}
           onChange={handleChange}
           required
-        />
-        <Input
-          label="Telefone"
-          type="text"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
         />
         {/* Role display/edit - consider if this should be editable by all users or only admins */}
         <div className="mb-4">

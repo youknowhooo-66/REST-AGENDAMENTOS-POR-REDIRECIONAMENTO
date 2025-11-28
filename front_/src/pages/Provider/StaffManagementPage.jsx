@@ -11,6 +11,7 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     name: staffData ? staffData.name : '',
   });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (staffData) {
@@ -20,11 +21,27 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) {
+      setErrors(prevErrors => ({ ...prevErrors, [e.target.name]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    let newErrors = {};
+    if (!formData.name.trim()) {
+      newErrors.name = 'O nome do funcionário é obrigatório.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (validateForm()) {
+      onSubmit(formData);
+    } else {
+      toast.error('Por favor, corrija os erros no formulário.');
+    }
   };
 
   return (
@@ -38,6 +55,7 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
           icon={<IconUser />}
           value={formData.name}
           onChange={handleChange}
+          error={errors.name}
           required
         />
         <Button type="submit" fullWidth>
