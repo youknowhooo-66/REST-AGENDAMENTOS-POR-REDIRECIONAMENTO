@@ -10,7 +10,7 @@ const ServiceList = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await api.get('/public/services');
+        const response = await api.get('/services');
         setServices(response.data);
       } catch (err) {
         setError(err.message);
@@ -27,7 +27,7 @@ const ServiceList = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Nossos Serviços</h1>
+      <h1 className="text-2xl font-bold mb-4">Meus Serviços</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
           <ServiceCard key={service.id} service={service} />

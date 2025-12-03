@@ -1,4 +1,4 @@
-// src/routes/serviceRoutes.js
+// src/routes/authService.js
 
 import express from 'express';
 import { serviceController } from '../controller/Service/ServiceController.js';
@@ -10,11 +10,10 @@ export const serviceRouter = express.Router();
 // CREATE: Criar novo serviço
 serviceRouter.post('/', serviceController.create);
 
-// SEARCH: Buscar serviços por nome
-serviceRouter.get('/search', serviceController.search);
+// SEARCH: Buscar serviços por nome (integrado ao getAll)
 
 // READ: Listar todos os serviços
-serviceRouter.get('/', serviceController.getAll); 
+serviceRouter.get('/', serviceController.getAll);
 
 // READ: Buscar serviço por ID
 serviceRouter.get('/:id', serviceController.getById);

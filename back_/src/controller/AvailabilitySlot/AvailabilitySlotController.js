@@ -4,6 +4,15 @@ const { Role, SlotStatus } = pkg;
 
 class AvailabilitySlotController {
 
+    constructor() {
+        this.create = this.create.bind(this);
+        this.createBulk = this.createBulk.bind(this);
+        this.getAll = this.getAll.bind(this);
+        this.getById = this.getById.bind(this);
+        this.update = this.update.bind(this);
+        this.delete = this.delete.bind(this);
+    }
+
     // Helper to get provider ID for authenticated user
     async getProviderId(userId) {
         const provider = await prisma.provider.findFirst({

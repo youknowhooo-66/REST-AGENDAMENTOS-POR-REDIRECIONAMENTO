@@ -31,7 +31,7 @@ class ServiceController {
             const newService = await prisma.service.create({
                 data: {
                     name,
-                    price: parseFloat(price),
+                    priceCents: Math.round(parseFloat(price) * 100),
                     durationMin: parseInt(durationMin),
                     providerId: provider.id, // Associa o serviço ao provedor
                 },
@@ -83,6 +83,42 @@ class ServiceController {
         }
     }
 
+    // READ (By ID)
+    async getById(req, res) {
+        const { id } = req.params;
+        const { userId, role } = req.user;
+
+        if (role !== Role.PROVIDER) {
+            return res.status(403).json({ error: 'Apenas provedores podem visualizar serviços.' });
+        }
+
+        try {
+            const provider = await prisma.provider.findFirst({
+                where: { ownerId: userId },
+            });
+
+            if (!provider) {
+                return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
+            }
+
+            const service = await prisma.service.findFirst({
+                where: {
+                    id: id,
+                    providerId: provider.id, // Garante que o serviço pertence ao provedor
+                },
+            });
+
+            if (!service) {
+                return res.status(404).json({ error: 'Serviço não encontrado ou não pertence a este provedor.' });
+            }
+
+            return res.status(200).json(service);
+        } catch (error) {
+            console.error('Erro ao buscar serviço por ID:', error);
+            return res.status(500).json({ error: 'Erro interno do servidor.' });
+        }
+    }
+
     // UPDATE
     async update(req, res) {
         const { id } = req.params;
@@ -104,7 +140,7 @@ class ServiceController {
 
             // Verificar se o serviço pertence ao provedor antes de atualizar
             const existingService = await prisma.service.findUnique({
-                where: { id: parseInt(id), providerId: provider.id },
+                where: { id: id, providerId: provider.id },
             });
 
             if (!existingService) {
@@ -112,10 +148,10 @@ class ServiceController {
             }
             
             const updatedService = await prisma.service.update({
-                where: { id: parseInt(id), providerId: provider.id }, // Garante que só atualiza o próprio serviço
+                where: { id: id, providerId: provider.id }, // Garante que só atualiza o próprio serviço
                 data: {
                     name,
-                    price: price !== undefined ? parseFloat(price) : undefined,
+                    priceCents: price !== undefined ? Math.round(parseFloat(price) * 100) : undefined,
                     durationMin: durationMin !== undefined ? parseInt(durationMin) : undefined,
                 },
             });
@@ -152,7 +188,7 @@ class ServiceController {
 
             // Verificar se o serviço pertence ao provedor antes de deletar
             const existingService = await prisma.service.findUnique({
-                where: { id: parseInt(id), providerId: provider.id },
+                where: { id: id, providerId: provider.id },
             });
 
             if (!existingService) {
@@ -160,7 +196,7 @@ class ServiceController {
             }
 
             await prisma.service.delete({
-                where: { id: parseInt(id), providerId: provider.id }, // Garante que só deleta o próprio serviço
+                where: { id: id, providerId: provider.id }, // Garante que só deleta o próprio serviço
             });
             return res.status(204).send();
         } catch (error) {

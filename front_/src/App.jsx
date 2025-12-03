@@ -33,8 +33,8 @@ import BookingManagementPage from './pages/Provider/BookingManagementPage'; // N
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
@@ -71,12 +71,12 @@ function App() {
               <Route path="admin/appointments/create" element={<AppointmentCreator />} />
             </Route>
           </Routes>
-        </Router>
-        <ToastContainer
-          position="bottom-right"
-          theme="colored"
-        />
-      </AuthProvider>
+          <ToastContainer
+            position="bottom-right"
+            theme="colored"
+          />
+        </AuthProvider>
+      </Router>
     </ThemeProvider>
   );
 }

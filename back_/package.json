@@ -25,7 +25,9 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "jest": "^30.2.0",
     "nodemon": "^3.0.1",
-    "prisma": "5.17.0"
+    "prisma": "5.17.0",
+    "supertest": "^7.1.4"
   }
 }

@@ -119,7 +119,7 @@ class AuthController {
 
         try {
             const payload = verifyRefresh(refreshToken);
-            const accessToken = signAccessToken({ userId: payload.userId, email: payload.email, nome: payload.nome });
+            const accessToken = signAccessToken({ userId: payload.userId, email: payload.email, name: payload.name });
             return res.json({ accessToken });
         } catch {
             return res.status(401).json({ error: "invalid refresh token" });
