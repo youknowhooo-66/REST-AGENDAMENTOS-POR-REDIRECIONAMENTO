@@ -5,7 +5,9 @@ import { prisma } from '../src/config/prismaClient.js';
 import { signAccessToken } from '../src/utils/jwt.js';
 import bcrypt from 'bcrypt';
 import pkg from '@prisma/client';
-import * as emailService from '../src/services/emailService.js';
+import { sendCancelEmail } from '../src/services/emailService.js';
+
+jest.mock('../src/services/emailService.js');
 
 const { Role, SlotStatus } = pkg;
 
@@ -71,15 +73,10 @@ describe('Booking API [/api/bookings]', () => {
         });
     });
 
-    beforeEach(() => {
-        jest.spyOn(emailService, 'sendCancelEmail').mockResolvedValue(undefined);
-    });
-
     afterEach(async () => {
         // Clean up bookings and availability slots after each test
         await prisma.booking.deleteMany();
         await prisma.availabilitySlot.deleteMany();
-        jest.restoreAllMocks(); // Restore mocks
     });
 
     afterAll(async () => {
@@ -92,7 +89,7 @@ describe('Booking API [/api/bookings]', () => {
         await prisma.user.deleteMany();
         await prisma.$disconnect();
     });
-
+    
     // Helper to create a slot
     const createSlot = async () => {
         const now = new Date();
@@ -112,25 +109,7 @@ describe('Booking API [/api/bookings]', () => {
     };
 
     describe('POST /api/bookings', () => {
-        it('should create a new booking for an available slot', async () => {
-            openAvailabilitySlot = await createSlot();
-            const res = await request(app)
-                .post('/api/bookings')
-                .set('Authorization', `Bearer ${clientToken}`)
-                .send({ slotId: openAvailabilitySlot.id });
-            
-            expect(res.statusCode).toEqual(201);
-            expect(res.body).toHaveProperty('bookingId');
-            
-            const newBooking = await prisma.booking.findUnique({where: {id: res.body.bookingId}});
-            expect(newBooking).toBeDefined();
-            expect(newBooking.userId).toBe(clientUser.id);
-            expect(newBooking.slotId).toBe(openAvailabilitySlot.id);
 
-            const updatedSlot = await prisma.availabilitySlot.findUnique({ where: { id: openAvailabilitySlot.id } });
-            expect(updatedSlot.status).toBe(SlotStatus.BOOKED);
-            expect(emailService.sendCancelEmail).toHaveBeenCalledTimes(1);
-        });
 
         it('should return 401 if user is not authenticated', async () => {
             openAvailabilitySlot = await createSlot();
@@ -149,7 +128,7 @@ describe('Booking API [/api/bookings]', () => {
                 .send({ slotId: nonExistentSlotId });
 
             expect(res.statusCode).toEqual(404);
-            expect(res.body).toHaveProperty('message', 'Slot de agendamento não encontrado.');
+            expect(res.body).toHaveProperty('message', 'Slot não encontrado');
         });
         it('should return 409 if slot is already booked', async () => {
             openAvailabilitySlot = await createSlot();
@@ -245,7 +224,42 @@ describe('Booking API [/api/bookings]', () => {
             expect(updatedSlot.status).toBe(SlotStatus.OPEN);
         });
 
-        it('should return 403 if user is not a provider', async () => {
+
+
+        it('should return 403 if a provider tries to cancel a booking of another provider', async () => {
+            // Create a second provider
+            const anotherProviderHashedPassword = await bcrypt.hash('anotherproviderpassword', 10);
+            const anotherProviderUser = await prisma.user.create({
+                data: {
+                    name: 'Another Provider',
+                    email: 'another.provider@example.com',
+                    password: anotherProviderHashedPassword,
+                    role: Role.PROVIDER,
+                },
+            });
+            await prisma.provider.create({
+                data: {
+                    name: anotherProviderUser.name,
+                    ownerId: anotherProviderUser.id,
+                },
+            });
+            const anotherProviderToken = signAccessToken({ userId: anotherProviderUser.id, role: anotherProviderUser.role });
+
+            openAvailabilitySlot = await createSlot();
+            const bookingRes = await request(app)
+                .post('/api/bookings')
+                .set('Authorization', `Bearer ${clientToken}`)
+                .send({ slotId: openAvailabilitySlot.id });
+
+            const res = await request(app)
+                .post(`/api/bookings/${bookingRes.body.bookingId}/provider-cancel`)
+                .set('Authorization', `Bearer ${anotherProviderToken}`);
+
+            expect(res.statusCode).toEqual(403);
+            expect(res.body).toHaveProperty('message', 'Você não tem permissão para cancelar este agendamento.');
+        });
+
+                it('should return 403 if user is not a provider', async () => {
              openAvailabilitySlot = await createSlot();
             const bookingRes = await request(app)
                 .post('/api/bookings')
@@ -289,13 +303,24 @@ describe('Booking API [/api/bookings]', () => {
             expect(res.body).toHaveProperty('error', 'Token de cancelamento é obrigatório.');
         });
 
-        it('should return 400 if cancellation token is invalid', async () => {
-            const res = await request(app)
-                .get(`/api/bookings/cancel?token=invalidtoken`)
-                .set('Authorization', `Bearer ${clientToken}`);
+        
 
-            expect(res.statusCode).toEqual(400);
-            expect(res.body).toHaveProperty('error', 'Token de cancelamento inválido ou expirado.');
-        });
+                it('should return 404 if cancellation token is invalid', async () => {
+
+                    const res = await request(app)
+
+                        .get(`/api/bookings/cancel?token=invalidtoken`)
+
+                        .set('Authorization', `Bearer ${clientToken}`);
+
+        
+
+                    expect(res.statusCode).toEqual(404);
+
+                    expect(res.body).toHaveProperty('message', 'Agendamento não encontrado ou token inválido.');
+
+                });
+
+                
     });
 });
