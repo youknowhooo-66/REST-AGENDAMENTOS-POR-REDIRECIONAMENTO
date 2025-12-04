@@ -127,6 +127,43 @@ class UserController {
             return res.status(500).json({ error: 'Erro interno do servidor ao deletar usuário.' });
         }
     }
+
+    async updateProfile(req, res) {
+        const { userId } = req.user;
+        const { name, email, avatarUrl, providerName } = req.body;
+
+        try {
+            const updatedUser = await prisma.$transaction(async (tx) => {
+                const user = await tx.user.update({
+                    where: { id: userId },
+                    data: {
+                        name,
+                        email,
+                        avatarUrl,
+                    },
+                    include: {
+                        provider: true,
+                    },
+                });
+
+                if (user.role === Role.PROVIDER && providerName && user.provider) {
+                    await tx.provider.update({
+                        where: { id: user.provider.id },
+                        data: {
+                            name: providerName,
+                        },
+                    });
+                }
+
+                return user;
+            });
+
+            res.status(200).json(updatedUser);
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    }
 }
 
 export const userController = new UserController();

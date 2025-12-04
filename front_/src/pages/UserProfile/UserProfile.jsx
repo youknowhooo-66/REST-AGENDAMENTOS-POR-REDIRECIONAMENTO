@@ -1,54 +1,110 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
-import UserForm from '../../components/UserForm/UserForm';
-import { AuthContext } from '../../contexts/AuthContext';
+import { toast } from 'react-toastify';
+import Input from '../../components/Form/Input';
+import Button from '../../components/Form/Button';
 
 const UserProfile = () => {
-  const { user: authUser, setUser: setAuthUser } = useContext(AuthContext);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const { user, setUser } = useAuth();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [providerName, setProviderName] = useState('');
+    const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!authUser) {
-        setLoading(false);
-        setError("Usuário não autenticado.");
-        return;
-      }
-      try {
-        const response = await api.get(`/users/${authUser.id}`);
-        setUser(response.data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+    useEffect(() => {
+        if (user) {
+            setName(user.name || '');
+            setEmail(user.email || '');
+            setAvatarUrl(user.avatarUrl || '');
+            if (user.role === 'PROVIDER' && user.provider) {
+                setProviderName(user.provider.name || '');
+            }
+        }
+    }, [user]);
+
+    const handleFileChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            setAvatarUrl(response.data.url);
+        } catch (error) {
+            toast.error('Erro ao fazer upload da imagem.');
+        }
     };
 
-    fetchUser();
-  }, [authUser]);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
 
-  const handleUpdate = async (updatedUserData) => {
-    try {
-      const response = await api.put(`/users/${authUser.id}`, updatedUserData);
-      setUser(response.data);
-      setAuthUser(response.data); // Update auth context as well
-    } catch (error) {
-      setError(error.message);
-    }
-  };
+        const updatedData = {
+            name,
+            email,
+            avatarUrl,
+            ...(user.role === 'PROVIDER' && { providerName }),
+        };
 
-  if (loading) return <div className="text-center p-4">Carregando perfil do usuário...</div>;
-  if (error) return <div className="text-center p-4 text-red-500">Erro: {error}</div>;
-  if (!user) return <div className="text-center p-4">Usuário não encontrado.</div>;
+        try {
+            const response = await api.put('/user/profile', updatedData);
+            setUser(response.data);
+            toast.success('Perfil atualizado com sucesso!');
+        } catch (error) {
+            toast.error('Erro ao atualizar o perfil.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Perfil do Usuário: {user.name}</h1>
-      <UserForm userData={user} onSubmit={handleUpdate} />
-    </div>
-  );
+    return (
+        <div className="container mx-auto p-4">
+            <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
+            <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                    <img src={user?.avatarUrl ? `http://localhost:3000${user.avatarUrl}`: ''} alt="Avatar" className="w-24 h-24 rounded-full" />
+                </div>
+                <Input
+                    label="Avatar"
+                    type="file"
+                    onChange={handleFileChange}
+                />
+                <Input
+                    label="Nome"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                />
+                <Input
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                {user && user.role === 'PROVIDER' && (
+                    <Input
+                        label="Nome do Provedor"
+                        type="text"
+                        value={providerName}
+                        onChange={(e) => setProviderName(e.target.value)}
+                    />
+                )}
+                <Button type="submit" disabled={loading}>
+                    {loading ? 'Salvando...' : 'Salvar'}
+                </Button>
+            </form>
+        </div>
+    );
 };
 
 export default UserProfile;

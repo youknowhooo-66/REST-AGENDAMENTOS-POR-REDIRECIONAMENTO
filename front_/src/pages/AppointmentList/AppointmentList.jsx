@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import AppointmentTable from '../../components/AppointmentTable/AppointmentTable';
 import { toast } from 'react-toastify';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AppointmentList = () => {
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,16 +13,33 @@ const AppointmentList = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await api.get('/bookings');
-        // Map the booking data to the format expected by AppointmentTable
-        const mappedAppointments = response.data.map(booking => ({
-          id: booking.id,
-          providerName: booking.slot.provider.name, // Client view: shows the provider's name
-          serviceName: booking.slot.service.name,
-          startTime: booking.slot.startAt,
-          endTime: booking.slot.endAt,
-          status: booking.status,
-        }));
+        const endpoint = user.role === 'PROVIDER' ? '/bookings/provider' : '/bookings';
+        const response = await api.get(endpoint);
+        
+        let mappedAppointments;
+        if (user.role === 'PROVIDER') {
+          mappedAppointments = response.data.map(booking => ({
+            id: booking.id,
+            clientName: booking.user.name,
+            serviceName: booking.slot.service.name,
+            serviceImageUrl: booking.slot.service.imageUrl, // Add service image
+            staffName: booking.slot.staff?.name, // Add staff name
+            staffImageUrl: booking.slot.staff?.imageUrl, // Add staff image
+            startTime: booking.slot.startAt,
+            endTime: booking.slot.endAt,
+            status: booking.status,
+          }));
+        } else {
+          mappedAppointments = response.data.map(booking => ({
+            id: booking.id,
+            providerName: booking.slot.provider.name,
+            serviceName: booking.slot.service.name,
+            serviceImageUrl: booking.slot.service.imageUrl, // Add service image
+            startTime: booking.slot.startAt,
+            endTime: booking.slot.endAt,
+            status: booking.status,
+          }));
+        }
         setAppointments(mappedAppointments);
       } catch (err) {
         setError(err.message);
@@ -30,8 +49,10 @@ const AppointmentList = () => {
       }
     };
 
-    fetchAppointments();
-  }, []);
+    if (user) {
+      fetchAppointments();
+    }
+  }, [user]);
 
   const handleCancelAppointment = async (appointmentId) => {
     if (!window.confirm('Tem certeza que deseja cancelar este agendamento?')) {
@@ -59,7 +80,7 @@ const AppointmentList = () => {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Lista de Agendamentos</h1>
-      <AppointmentTable appointments={appointments} onCancelAppointment={handleCancelAppointment} />
+      <AppointmentTable appointments={appointments} onCancelAppointment={handleCancelAppointment} isProviderView={user.role === 'PROVIDER'} />
     </div>
   );
 };

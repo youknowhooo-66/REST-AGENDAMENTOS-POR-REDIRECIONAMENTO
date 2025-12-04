@@ -73,10 +73,17 @@ class AuthController {
             const { email, password } = req.body;
             
             // Usa a instância importada
-            const user = await prisma.user.findUnique({ where: { email } }); 
+            let user = await prisma.user.findUnique({ where: { email } }); 
 
             if (!user || !(await bcrypt.compare(password, user.password))) {
                 return res.status(401).json({ error: "Credenciais inválidas" });
+            }
+
+            if (user.role === Role.PROVIDER) {
+                const provider = await prisma.provider.findUnique({
+                    where: { ownerId: user.id },
+                });
+                user.provider = provider;
             }
             
             // Gerar tokens...
@@ -98,7 +105,7 @@ class AuthController {
             res.status(200).json({
                 accessToken,
                 refreshToken,
-                user: { id: user.id, email: user.email, name: user.name, role: user.role },
+                user: { id: user.id, email: user.email, name: user.name, role: user.role, provider: user.provider },
             });
         } catch (error) {
             console.error("Erro no login:", error);

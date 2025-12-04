@@ -52,7 +52,7 @@ function App() {
               }
             >
               <Route path="dashboard" element={<Dashboard />} />
-              <Route path="profile" element={<ClientProfilePage />} /> {/* Nova rota para Perfil */}
+              <Route path="profile" element={<UserProfile />} /> {/* Nova rota para Perfil */}
               <Route path="client/booking" element={<ClientBookingPage />} /> {/* Nova rota para Agendamento */}
               <Route path="users" element={<UserList />} />
               <Route path="users/:id" element={<UserProfile />} />

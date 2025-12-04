@@ -9,13 +9,20 @@ import { IconEdit, IconTrash, IconPlus, IconUser } from '../../components/Icons'
 // StaffForm component for creating/editing staff
 const StaffForm = ({ staffData, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    name: staffData ? staffData.name : '',
+    name: '',
+    imageUrl: '', // New field for image URL
   });
   const [errors, setErrors] = useState({});
+  const [uploading, setUploading] = useState(false); // New state for upload loading
 
   useEffect(() => {
     if (staffData) {
-      setFormData({ name: staffData.name || '' });
+      setFormData({ 
+        name: staffData.name || '',
+        imageUrl: staffData.imageUrl || '', // Set existing image URL
+      });
+    } else {
+      setFormData({ name: '', imageUrl: '' });
     }
   }, [staffData]);
 
@@ -23,6 +30,30 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) {
       setErrors(prevErrors => ({ ...prevErrors, [e.target.name]: null }));
+    }
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploading(true);
+    const data = new FormData();
+    data.append('file', file);
+
+    try {
+      const response = await api.post('/upload', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setFormData(prev => ({ ...prev, imageUrl: response.data.url }));
+      toast.success('Imagem carregada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast.error('Erro ao fazer upload da imagem.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -48,6 +79,22 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
     <div className="bg-card p-8 rounded-lg shadow-md w-full max-w-md mx-auto">
       <h2 className="text-2xl font-bold text-center mb-6 text-text">{staffData ? 'Editar Funcionário' : 'Adicionar Novo Funcionário'}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Image Upload Input */}
+        <Input
+          label="Imagem do Funcionário"
+          type="file"
+          name="image"
+          onChange={handleFileChange}
+          disabled={uploading}
+        />
+        {uploading && <p className="text-sm text-text-muted mt-1">Carregando imagem...</p>}
+        {formData.imageUrl && (
+          <div className="my-4">
+            <p className="text-sm font-medium text-text mb-1">Preview da Imagem:</p>
+            <img src={`http://localhost:3000${formData.imageUrl}`} alt="Preview do Funcionário" className="w-32 h-32 object-cover rounded-md" />
+          </div>
+        )}
+
         <Input
           label="Nome do Funcionário"
           type="text"
@@ -58,7 +105,7 @@ const StaffForm = ({ staffData, onSubmit, onClose }) => {
           error={errors.name}
           required
         />
-        <Button type="submit" fullWidth>
+        <Button type="submit" fullWidth disabled={uploading}>
           {staffData ? 'Atualizar Funcionário' : 'Adicionar Funcionário'}
         </Button>
         <Button type="button" fullWidth variant="secondary" onClick={onClose}>
@@ -167,6 +214,9 @@ const StaffManagementPage = () => {
             <thead className="bg-muted">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                  Imagem
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Nome
                 </th>
                 <th scope="col" className="relative px-6 py-3">
@@ -177,6 +227,9 @@ const StaffManagementPage = () => {
             <tbody className="bg-card divide-y divide-border">
               {staff.map((staffMember) => (
                 <tr key={staffMember.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
+                    {staffMember.imageUrl && <img src={`http://localhost:3000${staffMember.imageUrl}`} alt={staffMember.name} className="w-10 h-10 object-cover rounded-full" />}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
                     {staffMember.name}
                   </td>

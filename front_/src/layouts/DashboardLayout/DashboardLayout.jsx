@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { ThemeContext } from "../../contexts/ThemeContext";
 import SideMenu from "../../components/SideMenu/SideMenu";
@@ -19,7 +19,7 @@ const Header = ({ toggleMenu }) => {
       {/* Botão de menu (mobile) */}
       <button
         onClick={toggleMenu}
-        className="text-text-muted hover:text-primary md:hidden"
+        className="text-text-muted hover:text-primary"
       >
         <IconMenu size={24} />
       </button>
@@ -31,15 +31,6 @@ const Header = ({ toggleMenu }) => {
 
       {/* Ações do cabeçalho */}
       <div className="flex items-center gap-4">
-        {/* Botão de tema já existe no SideMenu, mas podemos manter este também se desejado */}
-        <button
-          onClick={toggleTheme}
-          className="text-text-muted hover:text-primary
-                        transition-all duration-300 transform hover:rotate-12"
-        >
-          {theme === "light" ? <IconMoon size={22} /> : <IconSun size={22} />}
-        </button>
-
         {/* Perfil do usuário */}
         {user && (
           <div className="relative">
@@ -51,7 +42,7 @@ const Header = ({ toggleMenu }) => {
                 Olá, {user.name || user.email}
               </span>
               <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                {user.name ? user.name.charAt(0).toUpperCase() : "?"}
+                {user.avatarUrl ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full" /> : (user.name ? user.name.charAt(0).toUpperCase() : "?")}
               </div>
             </button>
 
@@ -69,10 +60,10 @@ const Header = ({ toggleMenu }) => {
                   </p>
                 </div>
 
-                <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-text-muted
+                <Link to="/profile" className="w-full flex items-center gap-2 px-4 py-2 text-sm text-text-muted
                                         hover:bg-muted hover:text-text transition-colors">
                   <IconUser size={16} /> Perfil
-                </button>
+                </Link>
 
                 <button
                   onClick={logout}
@@ -113,7 +104,7 @@ const DashboardLayout = () => {
       <div
         className={`transition-all duration-300 ease-in-out ${
           isMenuCollapsed ? "md:ml-20" : "md:ml-64"
-        }`}
+        } ${isMenuCollapsed ? '' : 'ml-64'}`}
       >
         <Header toggleMenu={toggleMenu} />
         <main className="p-4 sm:p-6 lg:p-8">

@@ -22,6 +22,7 @@ model User {
   Token     Token[]
   availabilitySlots AvailabilitySlot[]
   referralCode String?
+  avatarUrl  String?
 }
 
 model Provider {
@@ -43,6 +44,7 @@ model Service {
   name        String
   durationMin Int // duração do serviço em minutos
   priceCents  Int
+  imageUrl    String?
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   availSlots  AvailabilitySlot[]
@@ -53,6 +55,7 @@ model Staff {
   providerId String
   provider   Provider           @relation(fields: [providerId], references: [id])
   name       String
+  imageUrl   String?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   availSlots AvailabilitySlot[]

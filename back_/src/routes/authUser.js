@@ -18,3 +18,6 @@ userRouter.put('/:id', userController.update);
 
 // DELETE: Deletar usuário (Geralmente requer ADMIN)
 userRouter.delete('/:id', userController.delete);
+
+// UPDATE: Atualizar dados do perfil do usuário logado
+userRouter.put('/profile', userController.updateProfile);

@@ -92,9 +92,18 @@ const ServiceDetailPage = () => {
         {/* Service Header */}
         <div className="bg-card p-8 rounded-xl shadow-lg mb-8">
           <div className="flex flex-col md:flex-row justify-between items-start">
-            <div>
-              <h1 className="text-4xl font-bold text-text mb-2">{service.name}</h1>
-              <p className="text-lg text-primary font-semibold">{service.provider.name}</p>
+            <div className="flex items-center mb-4 md:mb-0">
+              {service.imageUrl && (
+                <img
+                  src={`http://localhost:3000${service.imageUrl}`}
+                  alt={service.name}
+                  className="w-32 h-32 object-cover rounded-lg mr-4"
+                />
+              )}
+              <div>
+                <h1 className="text-4xl font-bold text-text mb-2">{service.name}</h1>
+                <p className="text-lg text-primary font-semibold">{service.provider.name}</p>
+              </div>
             </div>
             <div className="flex items-center text-text-muted space-x-6 mt-4 md:mt-0">
               <div className="flex items-center gap-2">

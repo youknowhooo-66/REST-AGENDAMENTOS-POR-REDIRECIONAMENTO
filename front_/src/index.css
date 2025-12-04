@@ -4,7 +4,7 @@
   :root {
     --background: #ffffff;
     --foreground: #09090b;
-    --card: #ffffff;
+    --card: #f9fafb; /* Slightly off-white for card background */
     --card-foreground: #09090b;
     --popover: #ffffff;
     --popover-foreground: #09090b;
@@ -18,16 +18,17 @@
     --accent-foreground: #18181b;
     --destructive: #ef4444;
     --destructive-foreground: #fafafa;
-    --border: #e4e4e7;
-    --input: #e4e4e7;
+    --border: #d1d5db; /* A slightly darker gray for border */
+    --input: #f3f4f6;   /* A light gray for input background */
     --ring: #09090b;
-    --radius: 0.5rem;
+    --positive: #22c55e; /* green-500 */
+    --negative: #ef4444; /* red-500 */
   }
 
   .dark {
     --background: #09090b;
     --foreground: #fafafa;
-    --card: #09090b;
+    --card: #18181b; /* Slightly lighter dark gray for card background */
     --card-foreground: #fafafa;
     --popover: #09090b;
     --popover-foreground: #fafafa;
@@ -41,9 +42,11 @@
     --accent-foreground: #fafafa;
     --destructive: #7f1d1d;
     --destructive-foreground: #fafafa;
-    --border: #27272a;
-    --input: #27272a;
+    --border: #3f3f46; /* A slightly lighter dark gray for border */
+    --input: #1f2937;   /* A dark gray for input background */
     --ring: #d4d4d8;
+    --positive: #4ade80; /* green-400 */
+    --negative: #f87171; /* red-400 */
   }
 
   body {

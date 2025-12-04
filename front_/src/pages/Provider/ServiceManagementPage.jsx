@@ -119,6 +119,9 @@ const ServiceManagementPage = () => {
             <thead className="bg-muted">
               <tr>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
+                  Imagem
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Nome
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
@@ -135,6 +138,9 @@ const ServiceManagementPage = () => {
             <tbody className="bg-card divide-y divide-border">
               {services.map((service) => (
                 <tr key={service.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
+                    {service.imageUrl && <img src={`http://localhost:3000${service.imageUrl}`} alt={service.name} className="w-10 h-10 object-cover rounded-full" />}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
                     {service.name}
                   </td>

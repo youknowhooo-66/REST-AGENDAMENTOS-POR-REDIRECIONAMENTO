@@ -48,6 +48,13 @@ const PublicServiceListPage = () => {
                 key={service.id}
                 className="bg-card rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 overflow-hidden group"
               >
+                {service.imageUrl && (
+                  <img 
+                    src={`http://localhost:3000${service.imageUrl}`} 
+                    alt={service.name} 
+                    className="w-full h-48 object-cover mb-4" 
+                  />
+                )}
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-2xl font-bold text-text group-hover:text-primary transition-colors">

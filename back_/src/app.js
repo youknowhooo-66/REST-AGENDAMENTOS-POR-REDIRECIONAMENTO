@@ -10,14 +10,15 @@ import { availabilitySlotRouter } from './routes/authAvailabilitySlot.js'; // Im
 import { bookingRouter } from './routes/authBooking.js'; // Importar o novo router de bookings
 import { dashboardRouter } from './routes/authDashboard.js'; // Importar o novo router de dashboard
 import { publicRouter } from './routes/publicRoutes.js'; // Importar o novo router público
+import { uploadRouter } from './routes/uploadRoutes.js';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-
 
 const app = express()
 app.use(express.json());
 app.use(cors());
 
+// Servir arquivos estáticos da pasta 'uploads'
+app.use('/uploads', express.static('uploads'));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -56,5 +57,6 @@ app.use('/api/staff', auth, staffRouter); // Nova rota para gerenciamento de sta
 app.use('/api/availability-slots', auth, availabilitySlotRouter); // Nova rota para gerenciamento de horários
 app.use('/api/bookings', auth, bookingRouter); // Nova rota para gerenciamento de bookings
 app.use('/api/dashboard', auth, dashboardRouter); // Nova rota para o dashboard do provedor
+app.use('/api/upload', auth, uploadRouter); // Nova rota para upload de arquivos
 
 export { app };

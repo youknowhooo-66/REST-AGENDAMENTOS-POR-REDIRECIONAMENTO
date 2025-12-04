@@ -42,6 +42,8 @@ export default {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        positive: "var(--positive)",
+        negative: "var(--negative)",
       },
       borderRadius: {
         lg: "var(--radius)",

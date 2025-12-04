@@ -56,8 +56,9 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
 
             {/* Sidebar */}
             <aside
-                className={`fixed top-0 left-0 h-full bg-background border-r border-border text-text flex flex-col transition-all duration-300 ease-in-out z-40 ${isCollapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-64'
-                    }`}
+                className={`fixed top-0 left-0 h-full bg-background border-r border-border text-text flex flex-col transition-all duration-300 ease-in-out z-40 
+                    ${isCollapsed ? 'w-20' : 'w-64'} 
+                    ${isCollapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'}`}
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-border">
@@ -67,12 +68,6 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
                             SA-SENAI
                         </h1>
                     </div>
-                    <button
-                        onClick={toggleMenu}
-                        className="text-text-muted hover:text-primary focus:outline-none md:hidden"
-                    >
-                        <IconClose size={24} />
-                    </button>
                 </div>
 
                 {/* Menu */}
@@ -80,9 +75,6 @@ const SideMenu = ({ isCollapsed, toggleMenu }) => {
                     <ul>
                         <MenuItem to="/dashboard" icon={<IconDashboard size={20} />} isCollapsed={isCollapsed}>
                             Dashboard
-                        </MenuItem>
-                        <MenuItem to="/profile" icon={<IconUser size={20} />} isCollapsed={isCollapsed}>
-                            Meu Perfil
                         </MenuItem>
 
                         {/* Menu específico para CLIENTES */}
