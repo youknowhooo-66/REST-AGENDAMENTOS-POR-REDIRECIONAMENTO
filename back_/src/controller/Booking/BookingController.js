@@ -161,7 +161,7 @@ export const providerCancelBooking = catchAsync(async (req, res) => {
 export const createGuestBooking = catchAsync(async (req, res) => {
     const { name, email, phone, password, slotId } = req.body;
 
-    // 1. Validação de entrada
+    // 1. Validação de entrada (nome, email, senha e slotId são obrigatórios)
     if (!name || !email || !password || !slotId) {
         return res.status(400).json({ error: 'Nome, email, senha e ID do horário são obrigatórios.' });
     }
@@ -182,7 +182,7 @@ export const createGuestBooking = catchAsync(async (req, res) => {
                 data: {
                     name,
                     email,
-                    phone,
+                    phone: phone || null, // phone is now optional
                     password: hashedPassword,
                     role: Role.CLIENT,
                 },
@@ -223,17 +223,17 @@ export const createGuestBooking = catchAsync(async (req, res) => {
             });
 
             // 8. Atualizar o status do slot COM LOCK (garante que só atualiza se ainda estiver OPEN)
-            const updatedSlot = await tx.availabilitySlot.updateMany({
-                where: { 
-                    id: slotId,
-                    status: SlotStatus.OPEN // Só atualiza se ainda estiver OPEN (proteção contra concorrência)
-                },
-                data: {
-                    status: SlotStatus.BOOKED,
-                    bookingId: newBooking.id,
-                },
-            });
-            
+                        const updatedSlot = await tx.availabilitySlot.updateMany({
+                            where: {
+                                id: slotId,
+                                status: SlotStatus.OPEN // Só atualiza se ainda estiver OPEN (proteção contra concorrência)
+                            },
+                            data: {
+                                status: SlotStatus.BOOKED,
+                                bookingId: newBooking.id,
+                                userId: newUser.id, // Assign the new user's ID to the slot
+                            },
+                        });            
             // Se nenhum registro foi atualizado, significa que o slot foi agendado por outro usuário
             if (updatedSlot.count === 0) {
                 throw new ConflictError('Este horário não está mais disponível (foi agendado por outro usuário).');

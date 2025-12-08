@@ -86,8 +86,7 @@ class AvailabilitySlotController {
                     staffId: staffId || null,
                     startAt: parsedStartAt,
                     endAt: parsedEndAt,
-                    status: SlotStatus.OPEN,
-                    userId: userId,
+                    userId: null,
                 },
             });
             return res.status(201).json(newSlot);
@@ -166,7 +165,7 @@ class AvailabilitySlotController {
                             startAt: slotStart,
                             endAt: slotEnd,
                             status: SlotStatus.OPEN,
-                            userId: userId,
+                            userId: null,
                         });
                     }
                 }

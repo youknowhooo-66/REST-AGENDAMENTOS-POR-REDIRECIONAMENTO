@@ -4,19 +4,39 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import Input from '../../components/Form/Input';
 import Button from '../../components/Form/Button';
-import { IconUser, IconMail, IconLock } from '../../components/Icons';
+import { IconUser, IconMail, IconLock, IconPhone, IconCalendar } from '../../components/Icons'; // Added IconPhone, IconCalendar
 
 const ClientProfilePage = () => {
   const { user, login } = useAuth(); // Get user and login function
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
+  
+  // State for personal information form
+  const [profileFormData, setProfileFormData] = useState({
     name: user ? user.name : '',
     email: user ? user.email : '',
-    password: '',
+    phone: user ? user.phone || '' : '', // Added phone
+    age: user ? user.age || '' : '',     // Added age
+  });
+
+  // State for password change form
+  const [passwordFormData, setPasswordFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
   });
 
   useEffect(() => {
+    // Update profile form data when user context changes
+    if (user) {
+      setProfileFormData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        age: user.age || '',
+      });
+    }
+
     const fetchBookings = async () => {
       try {
         const response = await api.get('/bookings');
@@ -38,31 +58,60 @@ const ClientProfilePage = () => {
     }
   }, [user]);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleProfileChange = (e) => {
+    setProfileFormData({ ...profileFormData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswordFormData({ ...passwordFormData, [e.target.name]: e.target.value });
   };
 
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     
     const updateData = {
-      name: formData.name,
-      email: formData.email,
+      name: profileFormData.name,
+      email: profileFormData.email,
+      phone: profileFormData.phone, // Include phone
+      age: profileFormData.age ? parseInt(profileFormData.age, 10) : null, // Include age
     };
-    if (formData.password) {
-      updateData.password = formData.password;
-    }
 
     try {
+      // Assuming the backend returns the updated user data or a new token
       const response = await api.put(`/users/${user.userId}`, updateData);
       toast.success('Perfil atualizado com sucesso!');
-      // To update the user's name in the UI, we need to re-login with a new token
-      // This is a simplified approach. A better approach would be to have the backend
-      // return a new token upon profile update.
-      // For now, we will just show a success message.
+      // A more robust solution would be to update the user context after a successful update,
+      // possibly by re-fetching user data or having the backend return an updated token.
+      // For now, we rely on the toast message.
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err);
       const errorMessage = err.response?.data?.error || 'Erro ao atualizar perfil.';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    if (passwordFormData.newPassword !== passwordFormData.confirmNewPassword) {
+      toast.error('A nova senha e a confirmação não coincidem.');
+      return;
+    }
+
+    try {
+      await api.put('/users/change-password', {
+        currentPassword: passwordFormData.currentPassword,
+        newPassword: passwordFormData.newPassword,
+      });
+      toast.success('Senha alterada com sucesso!');
+      setPasswordFormData({ // Clear form on success
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      });
+    } catch (err) {
+      console.error('Erro ao alterar senha:', err);
+      const errorMessage = err.response?.data?.error || 'Erro ao alterar senha.';
       toast.error(errorMessage);
     }
   };
@@ -74,9 +123,9 @@ const ClientProfilePage = () => {
       <h1 className="text-3xl font-bold text-text mb-8">Meu Perfil</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Profile Form */}
+        {/* Personal Information Form */}
         <div className="lg:col-span-1">
-          <div className="bg-card p-6 rounded-xl shadow-md">
+          <div className="bg-card p-6 rounded-xl shadow-md mb-8"> {/* Added mb-8 for spacing */}
             <h2 className="text-2xl font-bold text-text mb-6">Informações Pessoais</h2>
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <Input
@@ -84,8 +133,8 @@ const ClientProfilePage = () => {
                 type="text"
                 name="name"
                 icon={<IconUser />}
-                value={formData.name}
-                onChange={handleChange}
+                value={profileFormData.name}
+                onChange={handleProfileChange}
                 required
               />
               <Input
@@ -93,20 +142,67 @@ const ClientProfilePage = () => {
                 type="email"
                 name="email"
                 icon={<IconMail />}
-                value={formData.email}
-                onChange={handleChange}
+                value={profileFormData.email}
+                onChange={handleProfileChange}
                 required
               />
               <Input
-                label="Nova Senha (deixe em branco para não alterar)"
-                type="password"
-                name="password"
-                icon={<IconLock />}
-                value={formData.password}
-                onChange={handleChange}
+                label="Telefone"
+                type="tel"
+                name="phone"
+                icon={<IconPhone />}
+                value={profileFormData.phone}
+                onChange={handleProfileChange}
+              />
+              <Input
+                label="Idade"
+                type="number"
+                name="age"
+                icon={<IconCalendar />}
+                value={profileFormData.age}
+                onChange={handleProfileChange}
+                min="0"
+                max="120"
               />
               <Button type="submit" fullWidth>
                 Atualizar Perfil
+              </Button>
+            </form>
+          </div>
+
+          {/* Password Change Form */}
+          <div className="bg-card p-6 rounded-xl shadow-md">
+            <h2 className="text-2xl font-bold text-text mb-6">Alterar Senha</h2>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <Input
+                label="Senha Atual"
+                type="password"
+                name="currentPassword"
+                icon={<IconLock />}
+                value={passwordFormData.currentPassword}
+                onChange={handlePasswordChange}
+                required
+              />
+              <Input
+                label="Nova Senha"
+                type="password"
+                name="newPassword"
+                icon={<IconLock />}
+                value={passwordFormData.newPassword}
+                onChange={handlePasswordChange}
+                required
+              />
+              <Input
+                label="Confirmar Nova Senha"
+                type="password"
+                name="confirmNewPassword"
+                icon={<IconLock />}
+                value={passwordFormData.confirmNewPassword}
+                onChange={handlePasswordChange}
+                required
+              />
+              <Button type="submit" fullWidth variant="destructive"> {/* Suggest a destructive variant for password change */}
+                Alterar Senha
               </Button>
             </form>
           </div>

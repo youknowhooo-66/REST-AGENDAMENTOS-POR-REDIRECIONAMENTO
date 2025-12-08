@@ -30,9 +30,9 @@ const Input = ({
         </label>
       )}
 
-      <div className="relative group">
+      <div className="relative flex items-center group">
         {icon && (
-          <div className="absolute top-1/2 left-4 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors-smooth z-10">
+          <div className="absolute left-4 text-slate-500 dark:text-slate-400 pointer-events-none group-focus-within:text-primary transition-colors-smooth">
             {icon}
           </div>
         )}

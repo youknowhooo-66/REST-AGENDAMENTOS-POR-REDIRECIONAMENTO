@@ -5,7 +5,6 @@ import {
     getClientBookings,
     getProviderBookings,
     providerCancelBooking,
-    createGuestBooking
 } from '../controller/Booking/BookingController.js';
 import { validate } from '../middleware/validation.js';
 import {
@@ -15,9 +14,6 @@ import {
 } from '../middleware/validation.js';
 
 export const bookingRouter = express.Router();
-
-// CREATE GUEST: Criar um novo agendamento e registrar um novo usuário (convidado)
-bookingRouter.post('/guest', createGuestBooking);
 
 // CREATE: Criar um novo agendamento (com validação)
 bookingRouter.post('/',

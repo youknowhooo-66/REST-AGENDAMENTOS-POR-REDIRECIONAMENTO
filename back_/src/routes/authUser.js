@@ -2,6 +2,8 @@
 
 import express from 'express';
 import { userController } from '../controller/User/userController.js';
+import { validate } from '../middleware/validation.js'; // Import the validate middleware
+import { changePasswordSchema } from '../middleware/validation.js'; // Import the changePasswordSchema
 
 export const userRouter = express.Router();
 
@@ -21,3 +23,6 @@ userRouter.delete('/:id', userController.delete);
 
 // UPDATE: Atualizar dados do perfil do usuário logado
 userRouter.put('/profile', userController.updateProfile);
+
+// UPDATE: Alterar senha do usuário logado
+userRouter.put('/change-password', validate(changePasswordSchema), userController.changePassword);

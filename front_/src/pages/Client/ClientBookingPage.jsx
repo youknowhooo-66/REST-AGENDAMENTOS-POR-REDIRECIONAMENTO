@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../../contexts/AuthContext';
 import { IconCalendar, IconClock, IconCurrencyDollar, IconUser, IconArrowLeft, IconCheck } from '../../components/Icons';
 import Button from '../../components/Form/Button';
+import Input from '../../components/Form/Input';
 
 const ClientBookingPage = () => {
     const { user } = useAuth();
@@ -17,6 +18,7 @@ const ClientBookingPage = () => {
     const [loading, setLoading] = useState(true);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [booking, setBooking] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
     // Fetch all available services
     useEffect(() => {
@@ -35,18 +37,17 @@ const ClientBookingPage = () => {
         fetchServices();
     }, []);
 
-    // Fetch available slots when a service is selected
+    // Fetch available slots when a service is selected or date changes
     useEffect(() => {
         if (selectedService) {
-            fetchAvailableSlots(selectedService.id);
+            fetchAvailableSlots(selectedService.id, selectedDate);
         }
-    }, [selectedService]);
+    }, [selectedService, selectedDate]);
 
-    const fetchAvailableSlots = async (serviceId) => {
+    const fetchAvailableSlots = async (serviceId, date) => {
         setLoadingSlots(true);
         try {
-            const today = new Date().toISOString().split('T')[0]; // Get date in YYYY-MM-DD format
-            const response = await api.get(`/public/services/${serviceId}/slots?date=${today}`);
+            const response = await api.get(`/public/services/${serviceId}/slots?date=${date}`);
             setAvailableSlots(response.data);
         } catch (err) {
             console.error('Erro ao buscar horários disponíveis:', err);
@@ -169,12 +170,25 @@ const ClientBookingPage = () => {
                             </div>
                         ) : (
                             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-6 border border-slate-100 dark:border-slate-700">
-                                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                                    Horários Disponíveis
-                                </h2>
-                                <p className="text-slate-600 dark:text-slate-300 mb-6">
-                                    {selectedService.name} - {selectedService.provider.name}
-                                </p>
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                                            Horários Disponíveis
+                                        </h2>
+                                        <p className="text-slate-600 dark:text-slate-300">
+                                            {selectedService.name} - {selectedService.provider.name}
+                                        </p>
+                                    </div>
+                                    <div className="w-full sm:w-auto">
+                                        <Input
+                                            type="date"
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                            min={new Date().toISOString().split('T')[0]}
+                                            className="w-full"
+                                        />
+                                    </div>
+                                </div>
 
                                 {loadingSlots ? (
                                     <div className="text-center py-12">
@@ -184,7 +198,7 @@ const ClientBookingPage = () => {
                                     <div className="text-center py-12">
                                         <IconClock size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
                                         <p className="text-slate-600 dark:text-slate-400">
-                                            Nenhum horário disponível para este serviço no momento.
+                                            Nenhum horário disponível para este serviço em {new Date(selectedDate).toLocaleDateString('pt-BR')}.
                                         </p>
                                     </div>
                                 ) : (
@@ -228,51 +242,51 @@ const ClientBookingPage = () => {
                                             })}
                                         </div>
 
-                                                                                 {/* Booking Summary */}
-                                                                                {selectedSlot && selectedService && (                                            <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-600 rounded-2xl p-6">
-                                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                                                    Confirmar Agendamento
-                                                </h3>
-                                                <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300 mb-6">
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Serviço:</span>
-                                                        <span>{selectedService.name}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Provedor:</span>
-                                                        <span>{selectedService.provider.name}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Data:</span>
-                                                        <span>{new Date(selectedSlot.startAt).toLocaleDateString('pt-BR')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="font-semibold">Horário:</span>
-                                                        <span>
-                                                            {new Date(selectedSlot.startAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} -
-                                                            {new Date(selectedSlot.endAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                    {selectedSlot.staff && (
-                                                        <div className="flex justify-between">
-                                                            <span className="font-semibold">Profissional:</span>
-                                                            <span>{selectedSlot.staff.name}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex justify-between border-t border-slate-300 dark:border-slate-600 pt-2 mt-2">
-                                                        <span className="font-bold">Valor:</span>
-                                                        <span className="font-bold text-lg">R$ {selectedService.price.toFixed(2)}</span>
-                                                    </div>
+                                        {/* Booking Summary */}
+                                        {selectedSlot && selectedService && (<div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-600 rounded-2xl p-6">
+                                            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                                                Confirmar Agendamento
+                                            </h3>
+                                            <div className="space-y-2 text-sm text-slate-700 dark:text-slate-300 mb-6">
+                                                <div className="flex justify-between">
+                                                    <span className="font-semibold">Serviço:</span>
+                                                    <span>{selectedService.name}</span>
                                                 </div>
-                                                <Button
-                                                    onClick={handleBooking}
-                                                    disabled={booking}
-                                                    fullWidth
-                                                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl"
-                                                >
-                                                    {booking ? 'Processando...' : 'Confirmar Agendamento'}
-                                                </Button>
+                                                <div className="flex justify-between">
+                                                    <span className="font-semibold">Provedor:</span>
+                                                    <span>{selectedService.provider.name}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="font-semibold">Data:</span>
+                                                    <span>{new Date(selectedSlot.startAt).toLocaleDateString('pt-BR')}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="font-semibold">Horário:</span>
+                                                    <span>
+                                                        {new Date(selectedSlot.startAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} -
+                                                        {new Date(selectedSlot.endAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                </div>
+                                                {selectedSlot.staff && (
+                                                    <div className="flex justify-between">
+                                                        <span className="font-semibold">Profissional:</span>
+                                                        <span>{selectedSlot.staff.name}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex justify-between border-t border-slate-300 dark:border-slate-600 pt-2 mt-2">
+                                                    <span className="font-bold">Valor:</span>
+                                                    <span className="font-bold text-lg">R$ {selectedService.price.toFixed(2)}</span>
+                                                </div>
                                             </div>
+                                            <Button
+                                                onClick={handleBooking}
+                                                disabled={booking}
+                                                fullWidth
+                                                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl"
+                                            >
+                                                {booking ? 'Processando...' : 'Confirmar Agendamento'}
+                                            </Button>
+                                        </div>
                                         )}
                                     </>
                                 )}

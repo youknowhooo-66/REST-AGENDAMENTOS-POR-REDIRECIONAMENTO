@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconUser, IconCalendar, IconClock, IconTrash } from '../../components/Icons'; // Assuming these exist or use similar
+import { formatImageUrl } from '../../utils/imageUtils'; // Import formatImageUrl
 
 const AppointmentTable = ({ appointments, onCancelAppointment, isProviderView }) => {
   if (!appointments || appointments.length === 0) {
@@ -49,69 +50,78 @@ const AppointmentTable = ({ appointments, onCancelAppointment, isProviderView })
           </tr>
         </thead>
         <tbody className="divide-y divide-border bg-card">
-          {appointments.map((appointment) => (
-            <tr key={appointment.id} className="hover:bg-muted/50 transition-colors duration-200">
-              <td className="px-6 py-4 text-sm text-foreground font-medium">#{appointment.id}</td>
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  {isProviderView && appointment.staffImageUrl ? (
-                    <img
-                      src={`http://localhost:3000${appointment.staffImageUrl}`}
-                      alt="Avatar"
-                      className="w-8 h-8 rounded-full object-cover ring-2 ring-background"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <IconUser size={14} />
-                    </div>
-                  )}
-                  <span className="text-sm font-medium text-foreground">
-                    {isProviderView ? appointment.clientName || appointment.user?.name : appointment.providerName}
+          {appointments.map((appointment) => {
+            const displayImageUrl = isProviderView 
+              ? appointment.clientAvatarUrl 
+              : appointment.providerAvatarUrl;
+            const displayName = isProviderView 
+              ? appointment.clientName || appointment.user?.name 
+              : appointment.providerName;
+
+            return (
+              <tr key={appointment.id} className="hover:bg-muted/50 transition-colors duration-200">
+                <td className="px-6 py-4 text-sm text-foreground font-medium">#{appointment.id}</td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    {displayImageUrl ? (
+                      <img
+                        src={formatImageUrl(displayImageUrl)}
+                        alt="Avatar"
+                        className="w-8 h-8 rounded-full object-cover ring-2 ring-background"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <IconUser size={14} />
+                      </div>
+                    )}
+                    <span className="text-sm font-medium text-foreground">
+                      {displayName}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    {appointment.serviceImageUrl && (
+                      <img
+                        src={formatImageUrl(appointment.serviceImageUrl)}
+                        alt="Service"
+                        className="w-10 h-10 rounded-lg object-cover border border-border"
+                      />
+                    )}
+                    <span className="text-sm text-foreground">{appointment.serviceName}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <IconCalendar size={14} />
+                    {new Date(appointment.startTime).toLocaleDateString()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <IconClock size={14} />
+                    {new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={getStatusBadgeClass(appointment.status)}>
+                    {getStatusLabel(appointment.status)}
                   </span>
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  {appointment.serviceImageUrl && (
-                    <img
-                      src={`http://localhost:3000${appointment.serviceImageUrl}`}
-                      alt="Service"
-                      className="w-10 h-10 rounded-lg object-cover border border-border"
-                    />
+                </td>
+                <td className="px-6 py-4 text-right whitespace-nowrap">
+                  {onCancelAppointment && appointment.status !== 'CANCELLED' && (
+                    <button
+                      onClick={() => onCancelAppointment(appointment.id)}
+                      className="text-destructive hover:text-destructive-dark hover:bg-destructive/10 p-2 rounded-lg transition-all"
+                      title="Cancelar Agendamento"
+                    >
+                      <IconTrash size={18} />
+                    </button>
                   )}
-                  <span className="text-sm text-foreground">{appointment.serviceName}</span>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <IconCalendar size={14} />
-                  {new Date(appointment.startTime).toLocaleDateString()}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <IconClock size={14} />
-                  {new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={getStatusBadgeClass(appointment.status)}>
-                  {getStatusLabel(appointment.status)}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-right whitespace-nowrap">
-                {onCancelAppointment && appointment.status !== 'CANCELLED' && (
-                  <button
-                    onClick={() => onCancelAppointment(appointment.id)}
-                    className="text-destructive hover:text-destructive-dark hover:bg-destructive/10 p-2 rounded-lg transition-all"
-                    title="Cancelar Agendamento"
-                  >
-                    <IconTrash size={18} />
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

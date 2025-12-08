@@ -294,16 +294,22 @@ export const bulkCreateSlotsSchema = z.object({
                     .max(6, 'Dia da semana deve ser entre 0 (domingo) e 6 (sábado)')
             )
             .min(1, 'Selecione pelo menos um dia da semana'),
-        startTime: z
+        dailyStartTime: z
             .string({
-                required_error: 'Horário de início é obrigatório',
+                required_error: 'Horário de início diário é obrigatório',
             })
             .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido (use HH:MM)'),
-        endTime: z
+        dailyEndTime: z
             .string({
-                required_error: 'Horário de fim é obrigatório',
+                required_error: 'Horário de fim diário é obrigatório',
             })
             .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido (use HH:MM)'),
+        timeSlots: z.array(
+            z.object({
+                start: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de início do slot inválido (use HH:MM)'),
+                end: z.string().regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de fim do slot inválido (use HH:MM)'),
+            })
+        ).min(1, 'Pelo menos um slot de horário é obrigatório para criação em massa.'),
     }),
 });
 
@@ -349,6 +355,12 @@ export const updateUserProfileSchema = z.object({
             )
             .optional(),
         avatar: z.string().url('URL do avatar inválida').optional(),
+        age: z
+            .number()
+            .int('Idade deve ser um número inteiro')
+            .positive('Idade deve ser um número positivo')
+            .max(120, 'Idade máxima é 120 anos')
+            .optional(),
     }),
 });
 

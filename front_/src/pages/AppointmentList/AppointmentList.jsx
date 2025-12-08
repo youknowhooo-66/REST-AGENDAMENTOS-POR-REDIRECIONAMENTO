@@ -21,10 +21,11 @@ const AppointmentList = () => {
           mappedAppointments = response.data.data.map(booking => ({
             id: booking.id,
             clientName: booking.user.name,
+            clientAvatarUrl: booking.user.avatarUrl, // Added client's avatarUrl
             serviceName: booking.slot.service.name,
-            serviceImageUrl: booking.slot.service.imageUrl, // Add service image
-            staffName: booking.slot.staff?.name, // Add staff name
-            staffImageUrl: booking.slot.staff?.imageUrl, // Add staff image
+            serviceImageUrl: booking.slot.service.imageUrl,
+            staffName: booking.slot.staff?.name,
+            staffImageUrl: booking.slot.staff?.imageUrl,
             startTime: booking.slot.startAt,
             endTime: booking.slot.endAt,
             status: booking.status,
@@ -33,8 +34,9 @@ const AppointmentList = () => {
           mappedAppointments = response.data.data.map(booking => ({
             id: booking.id,
             providerName: booking.slot.provider.name,
+            providerAvatarUrl: booking.slot.provider.avatarUrl, // Added provider's avatarUrl
             serviceName: booking.slot.service.name,
-            serviceImageUrl: booking.slot.service.imageUrl, // Add service image
+            serviceImageUrl: booking.slot.service.imageUrl,
             startTime: booking.slot.startAt,
             endTime: booking.slot.endAt,
             status: booking.status,

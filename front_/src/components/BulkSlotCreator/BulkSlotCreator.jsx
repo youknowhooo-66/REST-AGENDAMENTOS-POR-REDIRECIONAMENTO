@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react'; // Added useMemo
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 import Input from '../../components/Form/Input';
 import Button from '../../components/Form/Button';
-import { IconCalendar, IconClock, IconPlus, IconTrash } from '../../components/Icons';
+import { IconCalendar, IconClock, IconPlus, IconTrash, IconChevronRight } from '../../components/Icons'; // Added IconChevronRight
 
 const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
     const [formData, setFormData] = useState({
@@ -12,19 +12,60 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
         startDate: '',
         endDate: '',
         daysOfWeek: [],
-        timeSlots: [{ start: '09:00', end: '10:00' }],
+        dailyStartTime: '09:00', // New: Daily start time for slot generation
+        dailyEndTime: '17:00',   // New: Daily end time for slot generation
+        timeSlots: [], // This will be dynamically generated
     });
     const [loading, setLoading] = useState(false);
 
     const weekDays = [
-        { value: 0, label: 'Domingo' },
-        { value: 1, label: 'Segunda' },
-        { value: 2, label: 'Terça' },
-        { value: 3, label: 'Quarta' },
-        { value: 4, label: 'Quinta' },
-        { value: 5, label: 'Sexta' },
-        { value: 6, label: 'Sábado' },
+        { value: 0, label: 'Dom' }, // Abbreviated labels for compactness
+        { value: 1, label: 'Seg' },
+        { value: 2, label: 'Ter' },
+        { value: 3, label: 'Qua' },
+        { value: 4, label: 'Qui' },
+        { value: 5, label: 'Sex' },
+        { value: 6, label: 'Sáb' },
     ];
+
+    // Get selected service details to derive slot duration
+    const selectedService = useMemo(() => {
+        return serviceList.find(s => s.id === formData.serviceId);
+    }, [formData.serviceId, serviceList]);
+
+    const slotDurationMin = selectedService ? selectedService.durationMin : 60; // Default to 60 min
+
+    // Function to generate time slots based on daily range and duration
+    const generateTimeSlots = useCallback(() => {
+        if (!formData.dailyStartTime || !formData.dailyEndTime || !slotDurationMin) {
+            setFormData(prev => ({ ...prev, timeSlots: [] }));
+            return;
+        }
+
+        const slots = [];
+        let currentStartTime = new Date(`2000-01-01T${formData.dailyStartTime}:00`);
+        const dailyEndTimeObj = new Date(`2000-01-01T${formData.dailyEndTime}:00`);
+
+        while (currentStartTime < dailyEndTimeObj) {
+            const slotEnd = new Date(currentStartTime.getTime() + slotDurationMin * 60 * 1000);
+
+            if (slotEnd > dailyEndTimeObj) {
+                break; // Stop if the next slot goes past the daily end time
+            }
+
+            slots.push({
+                start: currentStartTime.toTimeString().slice(0, 5),
+                end: slotEnd.toTimeString().slice(0, 5),
+            });
+            currentStartTime = slotEnd; // Start of next slot is end of current slot
+        }
+        setFormData(prev => ({ ...prev, timeSlots: slots }));
+    }, [formData.dailyStartTime, formData.dailyEndTime, slotDurationMin]);
+
+    // Regenerate time slots whenever relevant dependencies change
+    useEffect(() => {
+        generateTimeSlots();
+    }, [generateTimeSlots]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -45,31 +86,17 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
         }
     };
 
-    const handleTimeSlotChange = (index, field, value) => {
-        const newTimeSlots = [...formData.timeSlots];
-        newTimeSlots[index][field] = value;
-        setFormData({ ...formData, timeSlots: newTimeSlots });
-    };
-
-    const addTimeSlot = () => {
-        setFormData({
-            ...formData,
-            timeSlots: [...formData.timeSlots, { start: '09:00', end: '10:00' }],
-        });
-    };
-
-    const removeTimeSlot = (index) => {
-        if (formData.timeSlots.length > 1) {
-            const newTimeSlots = formData.timeSlots.filter((_, i) => i !== index);
-            setFormData({ ...formData, timeSlots: newTimeSlots });
-        }
-    };
+    // Removed manual add/remove time slot functions
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (formData.daysOfWeek.length === 0) {
             toast.warning('Selecione pelo menos um dia da semana.');
+            return;
+        }
+        if (formData.timeSlots.length === 0) {
+            toast.warning('Nenhum horário gerado. Verifique os horários diários e a duração do serviço.');
             return;
         }
 
@@ -108,10 +135,15 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                         <option value="">Selecione um serviço</option>
                         {serviceList.map((service) => (
                             <option key={service.id} value={service.id}>
-                                {service.name}
+                                {service.name} ({service.durationMin} min)
                             </option>
                         ))}
                     </select>
+                    {formData.serviceId && (
+                        <p className="text-sm text-text-muted mt-2">
+                            Duração de cada slot: <span className="font-semibold">{slotDurationMin} minutos</span>
+                        </p>
+                    )}
                 </div>
 
                 {/* Staff Selection */}
@@ -177,49 +209,46 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                     </div>
                 </div>
 
-                {/* Time Slots */}
+                {/* Daily Time Range */}
                 <div>
-                    <div className="flex justify-between items-center mb-2">
-                        <label className="block text-sm font-medium text-text-muted">Horários</label>
-                        <button
-                            type="button"
-                            onClick={addTimeSlot}
-                            className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium"
-                        >
-                            <IconPlus size={16} />
-                            Adicionar Horário
-                        </button>
+                    <label className="block text-sm font-medium text-text-muted mb-2">Horário Diário de Trabalho</label>
+                    <div className="flex gap-2 items-center">
+                        <Input
+                            label="Início do Dia"
+                            type="time"
+                            name="dailyStartTime"
+                            value={formData.dailyStartTime}
+                            onChange={handleChange}
+                            required
+                            className="flex-1"
+                        />
+                        <span className="text-text-muted">até</span>
+                        <Input
+                            label="Fim do Dia"
+                            type="time"
+                            name="dailyEndTime"
+                            value={formData.dailyEndTime}
+                            onChange={handleChange}
+                            required
+                            className="flex-1"
+                        />
                     </div>
-                    <div className="space-y-2">
-                        {formData.timeSlots.map((slot, index) => (
-                            <div key={index} className="flex gap-2 items-center">
-                                <input
-                                    type="time"
-                                    value={slot.start}
-                                    onChange={(e) => handleTimeSlotChange(index, 'start', e.target.value)}
-                                    className="flex-1 p-2 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    required
-                                />
-                                <span className="text-text-muted">até</span>
-                                <input
-                                    type="time"
-                                    value={slot.end}
-                                    onChange={(e) => handleTimeSlotChange(index, 'end', e.target.value)}
-                                    className="flex-1 p-2 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
-                                    required
-                                />
-                                {formData.timeSlots.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeTimeSlot(index)}
-                                        className="text-destructive hover:text-destructive/80 p-2"
-                                    >
-                                        <IconTrash size={18} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                </div>
+
+                {/* Generated Time Slots Preview */}
+                <div className="mt-4">
+                    <h3 className="text-sm font-medium text-text-muted mb-2">Horários Gerados ({formData.timeSlots.length})</h3>
+                    {formData.timeSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border border-[var(--border)] rounded-lg bg-input">
+                            {formData.timeSlots.map((slot, index) => (
+                                <span key={index} className="bg-primary/10 text-primary-foreground text-xs px-2 py-1 rounded-md flex items-center justify-between">
+                                    {slot.start} <IconChevronRight size={12} /> {slot.end}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-xs text-text-muted">Nenhum horário gerado. Selecione um serviço e defina o horário diário.</p>
+                    )}
                 </div>
 
                 {/* Submit Buttons */}

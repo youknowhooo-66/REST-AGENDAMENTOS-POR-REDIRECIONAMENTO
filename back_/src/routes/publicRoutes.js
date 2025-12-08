@@ -1,5 +1,6 @@
 import express from 'express';
 import { publicController } from '../controller/Public/PublicController.js';
+import { createGuestBooking } from '../controller/Booking/BookingController.js'; // Import createGuestBooking
 
 export const publicRouter = express.Router();
 
@@ -17,3 +18,6 @@ publicRouter.get('/services/:serviceId/staff', publicController.getStaffByServic
 
 // GET: Buscar horários disponíveis para um funcionário em uma data específica
 publicRouter.get('/staff/:staffId/slots', publicController.getSlotsByStaff);
+
+// POST: Criar um novo agendamento e registrar um novo usuário (convidado) - Rota Pública
+publicRouter.post('/bookings/guest', createGuestBooking);

@@ -105,6 +105,7 @@ class PublicController {
                 where: {
                     serviceId: serviceId,
                     status: 'OPEN', // SlotStatus.OPEN
+                    userId: null, // Only return slots not associated with any user
                     startAt: startAtFilter,
                 },
                 orderBy: {
@@ -207,6 +208,7 @@ class PublicController {
                 where: {
                     staffId: staffId,
                     status: 'OPEN',
+                    userId: null, // Only return slots not associated with any user
                     startAt: startAtFilter,
                 },
                 orderBy: {

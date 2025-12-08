@@ -128,7 +128,7 @@ class BookingService {
                     id: slot.id,
                     status: SlotStatus.OPEN // Garante que só atualiza se ainda estiver OPEN
                 },
-                data: { status: SlotStatus.BOOKED }
+                data: { status: SlotStatus.BOOKED, userId: user.id }
             });
             
             if (!updatedSlot) {
@@ -287,7 +287,8 @@ class BookingService {
                     },
                     provider: {
                         select: {
-                            name: true
+                            name: true,
+                            avatarUrl: true // Include provider's avatarUrl
                         }
                     }
                 }
@@ -377,7 +378,8 @@ class BookingService {
                             id: true,
                             name: true,
                             email: true,
-                            phone: true
+                            phone: true,
+                            avatarUrl: true // Include user's (client's) avatarUrl
                         }
                     },
                     slot: {

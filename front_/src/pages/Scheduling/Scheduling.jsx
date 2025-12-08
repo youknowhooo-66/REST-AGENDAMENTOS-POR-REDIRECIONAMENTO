@@ -1041,6 +1041,13 @@ const Scheduling = () => {
             return;
         }
 
+        // If authenticated, check if user needs to complete profile
+        if (needsProfileCompletion) {
+            modalState.setShowClientDetailsModal(true);
+            toast.info('Por favor, complete seu perfil (nome e telefone) antes de agendar.');
+            return;
+        }
+
         try {
             const bookingData = { slotId: selectedSlot.id };
             const response = await api.post('/bookings', bookingData);
@@ -1050,6 +1057,7 @@ const Scheduling = () => {
             setBookingConfirmed(true);
             setCreatedBooking(newBooking);
             setSelectedSlot(null);
+            handleViewAppointments(); // Redirect authenticated user to appointments page
 
             // Refresh slots to reflect the booking
             const slots = await schedulingData.fetchAvailableSlots(
@@ -1347,6 +1355,7 @@ const Scheduling = () => {
                     modalState.setShowBookingAndRegisterModal(false);
                     setBookingConfirmed(true);
                     setCreatedBooking(bookingData.booking);
+                    navigate('/appointments'); // Redirect guest to appointments page
                 }}
             />
         </div>
