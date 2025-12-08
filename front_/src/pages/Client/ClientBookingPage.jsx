@@ -142,7 +142,7 @@ const ClientBookingPage = () => {
                                             <div className="flex items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                                                 <span className="flex items-center gap-1">
                                                     <IconCurrencyDollar size={14} />
-                                                    R$ {service.price ? service.price.toFixed(2) : 'N/A'}
+                                                    R$ {service.priceCents !== undefined ? (service.priceCents / 100).toFixed(2) : 'N/A'}
                                                 </span>
                                                 <span className="flex items-center gap-1">
                                                     <IconClock size={14} />
@@ -275,7 +275,7 @@ const ClientBookingPage = () => {
                                                 )}
                                                 <div className="flex justify-between border-t border-slate-300 dark:border-slate-600 pt-2 mt-2">
                                                     <span className="font-bold">Valor:</span>
-                                                    <span className="font-bold text-lg">R$ {selectedService.price.toFixed(2)}</span>
+                                                    <span className="font-bold text-lg">R$ {selectedService.priceCents !== undefined ? (selectedService.priceCents / 100).toFixed(2) : 'N/A'}</span>
                                                 </div>
                                             </div>
                                             <Button
