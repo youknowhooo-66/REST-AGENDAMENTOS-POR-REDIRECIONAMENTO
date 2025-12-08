@@ -51,6 +51,11 @@ export const IconCheck = (props) => <Icon {...props} path={<polyline points="20 
 export const IconSearch = (props) => <Icon {...props} path={<><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></>} />;
 export const IconTable = (props) => <Icon {...props} path={<><path d="M12 3v18"></path><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M3 21h18"></path><path d="M3 3h18"></path></>} />;
 export const IconFilter = (props) => <Icon {...props} path={<><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></>} />;
+export const IconShare = (props) => <Icon {...props} path={<><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></>} />;
+export const IconQrCode = (props) => <Icon {...props} path={<><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></>} />;
+export const IconPalette = (props) => <Icon {...props} path={<><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.91-.05 2-.05 2.03 0 3.75-1.55 3.75-3.5 0-1.29-.68-2.52-1.98-2.95-.31-.13-.52-.39-.52-.69v-.41c0-1.18.9-2.28 2.08-2.34 1.63-.08 3.67-1.33 3.67-4.06 0-3.59-3.88-6-9-6Z" /></>} />;
+export const IconX = (props) => <Icon {...props} path={<><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></>} />;
+export const IconChevronLeft = (props) => <Icon {...props} path={<polyline points="15 18 9 12 15 6"></polyline>} />;
+export const IconChevronRight = (props) => <Icon {...props} path={<polyline points="9 18 15 12 9 6"></polyline>} />;
+export const IconEye = (props) => <Icon {...props} path={<><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></>} />;
 
-// I'm removing the individual icon files I created earlier to avoid confusion.
-// This single file will be the source of truth for all icons.

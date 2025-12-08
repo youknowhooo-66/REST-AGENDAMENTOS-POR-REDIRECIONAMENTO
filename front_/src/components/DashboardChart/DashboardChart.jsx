@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-popover/80 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-border">
+      <div className="bg-popover/80 backdrop-blur-sm p-3 rounded-lg shadow-lg border border-[var(--border)]">
         <p className="font-bold text-text">{`${label}`}</p>
         <p className="text-sm text-primary">{`${payload[0].name}: ${payload[0].value}`}</p>
       </div>
@@ -15,7 +15,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const DashboardChart = ({ data, dataKeyX = "name", dataKeyY = "bookings", nameKey = "Bookings" }) => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useTheme();
   const [colors, setColors] = useState({
     tick: '#6b7280',
     grid: '#e5e7eb',

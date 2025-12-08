@@ -1,84 +1,112 @@
 import React from 'react';
+import { IconUser, IconCalendar, IconClock, IconTrash } from '../../components/Icons'; // Assuming these exist or use similar
 
 const AppointmentTable = ({ appointments, onCancelAppointment, isProviderView }) => {
+  if (!appointments || appointments.length === 0) {
+    return (
+      <div className="p-8 text-center bg-card rounded-xl border border-border shadow-sm">
+        <p className="text-muted-foreground text-lg">Nenhum agendamento encontrado.</p>
+      </div>
+    );
+  }
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'CONFIRMED':
+        return 'badge badge-success';
+      case 'CANCELLED':
+        return 'badge badge-error';
+      default:
+        return 'badge badge-warning';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'CONFIRMED':
+        return 'Confirmado';
+      case 'CANCELLED':
+        return 'Cancelado';
+      case 'PENDING':
+        return 'Pendente';
+      default:
+        return status;
+    }
+  };
+
   return (
-    <div className="overflow-x-auto bg-white rounded-lg shadow">
-      <table className="min-w-full leading-normal">
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
         <thead>
-          <tr>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Agendamento ID
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              {isProviderView ? 'Nome do Cliente' : 'Nome do Provedor'}
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Serviço
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Imagem do Serviço
-            </th>
-            {isProviderView && (
-                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Imagem do Profissional
-                </th>
-            )}
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Data de Início
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Fim
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Status
-            </th>
-            <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Ações
-            </th>
+          <tr className="bg-secondary/50 border-b border-border text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <th className="px-6 py-4 rounded-tl-lg">ID</th>
+            <th className="px-6 py-4">{isProviderView ? 'Cliente' : 'Profissional'}</th>
+            <th className="px-6 py-4">Serviço</th>
+            <th className="px-6 py-4">Data</th>
+            <th className="px-6 py-4">Horário</th>
+            <th className="px-6 py-4">Status</th>
+            <th className="px-6 py-4 rounded-tr-lg text-right">Ações</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-border bg-card">
           {appointments.map((appointment) => (
-            <tr key={appointment.id}>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {appointment.id}
+            <tr key={appointment.id} className="hover:bg-muted/50 transition-colors duration-200">
+              <td className="px-6 py-4 text-sm text-foreground font-medium">#{appointment.id}</td>
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
+                  {isProviderView && appointment.staffImageUrl ? (
+                    <img
+                      src={`http://localhost:3000${appointment.staffImageUrl}`}
+                      alt="Avatar"
+                      className="w-8 h-8 rounded-full object-cover ring-2 ring-background"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <IconUser size={14} />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-foreground">
+                    {isProviderView ? appointment.clientName || appointment.user?.name : appointment.providerName}
+                  </span>
+                </div>
               </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {isProviderView ? appointment.clientName : appointment.providerName}
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-3">
+                  {appointment.serviceImageUrl && (
+                    <img
+                      src={`http://localhost:3000${appointment.serviceImageUrl}`}
+                      alt="Service"
+                      className="w-10 h-10 rounded-lg object-cover border border-border"
+                    />
+                  )}
+                  <span className="text-sm text-foreground">{appointment.serviceName}</span>
+                </div>
               </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {appointment.serviceName}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <IconCalendar size={14} />
+                  {new Date(appointment.startTime).toLocaleDateString()}
+                </div>
               </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {appointment.serviceImageUrl && <img src={`http://localhost:3000${appointment.serviceImageUrl}`} alt="Service" className="w-10 h-10 object-cover rounded-full" />}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <IconClock size={14} />
+                  {new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </div>
               </td>
-              {isProviderView && (
-                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                      {appointment.staffImageUrl && <img src={`http://localhost:3000${appointment.staffImageUrl}`} alt="Staff" className="w-10 h-10 object-cover rounded-full" />}
-                  </td>
-              )}
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {new Date(appointment.startTime).toLocaleString()}
-              </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                {new Date(appointment.endTime).toLocaleString()}
-              </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                  appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                  appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800' // For other statuses like PENDING
-                }`}>
-                  {appointment.status}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={getStatusBadgeClass(appointment.status)}>
+                  {getStatusLabel(appointment.status)}
                 </span>
               </td>
-              <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+              <td className="px-6 py-4 text-right whitespace-nowrap">
                 {onCancelAppointment && appointment.status !== 'CANCELLED' && (
                   <button
                     onClick={() => onCancelAppointment(appointment.id)}
-                    className="text-red-600 hover:text-red-900"
+                    className="text-destructive hover:text-destructive-dark hover:bg-destructive/10 p-2 rounded-lg transition-all"
+                    title="Cancelar Agendamento"
                   >
-                    Cancelar
+                    <IconTrash size={18} />
                   </button>
                 )}
               </td>

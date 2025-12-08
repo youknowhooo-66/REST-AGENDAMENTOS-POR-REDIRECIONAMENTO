@@ -4,12 +4,14 @@ import { toast } from 'react-toastify';
 import Modal from '../../components/Modal/Modal';
 import Input from '../../components/Form/Input';
 import Button from '../../components/Form/Button';
-import { IconEdit, IconTrash, IconPlus, IconCalendar, IconClock, IconBolt, IconTable } from '../../components/Icons';
+import { IconEdit, IconTrash, IconPlus, IconCalendar, IconClock, IconBolt, IconTable, IconShare } from '../../components/Icons';
 import BulkSlotCreator from '../../components/BulkSlotCreator/BulkSlotCreator';
 import CalendarView from '../../components/CalendarView/CalendarView'; // Import CalendarView
+import ShareBookingModal from '../../components/ShareBookingModal';
 
 // AvailabilitySlotForm component for creating/editing slots
 const AvailabilitySlotForm = ({ slotData, onSubmit, onClose, staffList, serviceList }) => {
+  // ... (código do form permanece igual)
   const [formData, setFormData] = useState({
     serviceId: slotData ? slotData.serviceId : '',
     staffId: slotData ? slotData.staffId : '',
@@ -48,7 +50,7 @@ const AvailabilitySlotForm = ({ slotData, onSubmit, onClose, staffList, serviceL
             name="serviceId"
             value={formData.serviceId}
             onChange={handleChange}
-            className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full p-3 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
             required
           >
             <option value="">Selecione um serviço</option>
@@ -65,7 +67,7 @@ const AvailabilitySlotForm = ({ slotData, onSubmit, onClose, staffList, serviceL
             name="staffId"
             value={formData.staffId}
             onChange={handleChange}
-            className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+            className="w-full p-3 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
           >
             <option value="">Nenhum funcionário</option>
             {staffList.map(staff => (
@@ -115,6 +117,8 @@ const AvailabilitySlotManagementPage = () => {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false); // Modal for bulk creation
   const [editingSlot, setEditingSlot] = useState(null); // Slot data for editing
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [selectedSlotForShare, setSelectedSlotForShare] = useState(null);
 
   const fetchDependencies = async () => {
     try {
@@ -194,6 +198,11 @@ const AvailabilitySlotManagementPage = () => {
     }
   };
 
+  const handleShareSlot = (slot) => {
+    setSelectedSlotForShare(slot);
+    setShareModalOpen(true);
+  };
+
   if (loading) return <div className="text-center p-4">Carregando horários...</div>;
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
@@ -202,26 +211,24 @@ const AvailabilitySlotManagementPage = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-text mb-4 sm:mb-0">Gerenciar Horários de Disponibilidade</h1>
         <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('table')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                viewMode === 'table'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+          <button
+            onClick={() => setViewMode('table')}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${viewMode === 'table'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
               }`}
-            >
-              <IconTable size={20} /> Tabela
-            </button>
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                viewMode === 'calendar'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+          >
+            <IconTable size={20} /> Tabela
+          </button>
+          <button
+            onClick={() => setViewMode('calendar')}
+            className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${viewMode === 'calendar'
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
               }`}
-            >
-              <IconCalendar size={20} /> Calendário
-            </button>
+          >
+            <IconCalendar size={20} /> Calendário
+          </button>
           <button
             onClick={handleCreateBulkSlots}
             className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-secondary/90 transition-colors"
@@ -239,12 +246,13 @@ const AvailabilitySlotManagementPage = () => {
 
       {viewMode === 'table' ? (
         slots.length === 0 ? (
-          <div className="text-center text-text-muted p-8 border border-border rounded-lg">
+          <div className="text-center text-text-muted p-8 border border-[var(--border)] rounded-lg">
             <p className="mb-4">Nenhum horário de disponibilidade cadastrado ainda.</p>
             <button
               onClick={handleCreateSlot}
               className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-secondary/90 transition-colors"
             >
+              <IconPlus size={20} className="mr-2 inline" />
               Criar Primeiro Horário
             </button>
           </div>
@@ -290,16 +298,23 @@ const AvailabilitySlotManagementPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${slot.status === 'OPEN' ? 'bg-green-100 text-green-800' :
-                          slot.status === 'BOOKED' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                        slot.status === 'BOOKED' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
                         }`}>
                         {slot.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                      <button
+                        onClick={() => handleShareSlot(slot)}
+                        className="text-blue-600 hover:text-blue-800"
+                        title="Compartilhar Link do Serviço"
+                      >
+                        <IconShare size={18} />
+                      </button>
                       <button
                         onClick={() => handleEditSlot(slot)}
-                        className="text-primary hover:text-primary/80 mr-3"
+                        className="text-primary hover:text-primary/80"
                         title="Editar"
                       >
                         <IconEdit size={18} />
@@ -344,6 +359,14 @@ const AvailabilitySlotManagementPage = () => {
           onSuccess={fetchSlots}
         />
       </Modal>
+
+      <ShareBookingModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        customUrl={selectedSlotForShare ? `${window.location.origin}/scheduling?serviceId=${selectedSlotForShare.serviceId}&date=${new Date(selectedSlotForShare.startAt).toISOString().split('T')[0]}` : ''}
+        customTitle="Compartilhar Serviço"
+        customDescription={`Compartilhe este link para agendamento direto de ${selectedSlotForShare?.service?.name || 'Serviço'}.`}
+      />
     </div>
   );
 };

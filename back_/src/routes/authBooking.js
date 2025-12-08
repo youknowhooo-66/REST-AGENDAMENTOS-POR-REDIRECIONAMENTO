@@ -1,23 +1,50 @@
 import express from 'express';
-import { createBooking, cancelBooking, getClientBookings, getProviderBookings, providerCancelBooking } from '../controller/Booking/BookingController.js'; // Import getProviderBookings
+import {
+    createBooking,
+    cancelBooking,
+    getClientBookings,
+    getProviderBookings,
+    providerCancelBooking,
+    createGuestBooking
+} from '../controller/Booking/BookingController.js';
+import { validate } from '../middleware/validation.js';
+import {
+    createBookingSchema,
+    listBookingsSchema,
+    cancelBookingSchema
+} from '../middleware/validation.js';
 
 export const bookingRouter = express.Router();
 
-// CREATE: Criar um novo agendamento (protegido para clientes)
-bookingRouter.post('/', createBooking);
+// CREATE GUEST: Criar um novo agendamento e registrar um novo usuário (convidado)
+bookingRouter.post('/guest', createGuestBooking);
 
-// GET: Listar todos os agendamentos do cliente autenticado
-bookingRouter.get('/', getClientBookings);
+// CREATE: Criar um novo agendamento (com validação)
+bookingRouter.post('/',
+    validate(createBookingSchema),
+    createBooking
+);
 
-// GET: Listar todos os agendamentos do provedor autenticado
-bookingRouter.get('/provider', getProviderBookings);
+// GET: Listar agendamentos do cliente (com validação de paginação)
+bookingRouter.get('/',
+    validate(listBookingsSchema),
+    getClientBookings
+);
 
-// CANCEL: Cancelar um agendamento (rota pública, acessada via link de e-mail)
-// Note: This should ideally be a POST to prevent accidental cancellations.
-bookingRouter.get('/cancel', cancelBooking);
+// GET: Listar agendamentos do provedor (com validação de paginação)
+bookingRouter.get('/provider',
+    validate(listBookingsSchema),
+    getProviderBookings
+);
 
-// CANCEL: Cancelar um agendamento pelo provedor
-bookingRouter.post('/:bookingId/provider-cancel', providerCancelBooking);
+// CANCEL: Cancelar agendamento via token (link de email)
+bookingRouter.get('/cancel',
+    cancelBooking
+);
 
-// TODO: Implementar rota para buscar um agendamento específico do cliente
-// bookingRouter.get('/:id', bookingController.getClientBookingById);
+// CANCEL: Provedor cancela um agendamento
+bookingRouter.delete('/:bookingId/provider-cancel',
+    validate(cancelBookingSchema),
+    providerCancelBooking
+);
+

@@ -121,7 +121,7 @@ const ClientProfilePage = () => {
             ) : (
               <div className="space-y-4">
                 {bookings.map(booking => (
-                  <div key={booking.id} className="border border-border p-4 rounded-lg flex justify-between items-center">
+                  <div key={booking.id} className="border border-[var(--border)] p-4 rounded-lg flex justify-between items-center">
                     <div>
                       <p className="font-bold text-text">{booking.slot.service.name}</p>
                       <p className="text-sm text-text-muted">

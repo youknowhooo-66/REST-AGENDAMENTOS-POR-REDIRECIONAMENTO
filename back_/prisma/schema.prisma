@@ -23,6 +23,13 @@ model User {
   availabilitySlots AvailabilitySlot[]
   referralCode String?
   avatarUrl  String?
+  phone      String?
+  age        Int?
+
+  // Índices para melhorar performance
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Provider {
@@ -42,12 +49,19 @@ model Service {
   providerId  String
   provider    Provider           @relation(fields: [providerId], references: [id])
   name        String
+  description String?
   durationMin Int // duração do serviço em minutos
   priceCents  Int
-  imageUrl    String?
+  imageUrl    String?            // Mantido para compatibilidade
+  images      Json?              // Array de URLs de imagens (máximo 10)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   availSlots  AvailabilitySlot[]
+
+  // Índices para melhorar performance
+  @@index([providerId])
+  @@index([name])
+  @@index([createdAt])
 }
 
 model Staff {
@@ -69,8 +83,8 @@ model AvailabilitySlot {
   service    Service    @relation(fields: [serviceId], references: [id])
   staffId    String?
   staff      Staff?     @relation(fields: [staffId], references: [id])
-  userId     String
-  user       User       @relation(fields: [userId], references: [id])
+  userId     String?
+  user       User?      @relation(fields: [userId], references: [id])
   startAt    DateTime
   endAt      DateTime
   status     SlotStatus @default(OPEN) // OPEN, BOOKED, BLOCKED
@@ -81,6 +95,9 @@ model AvailabilitySlot {
 
   @@unique([providerId, startAt]) // evita slots duplicados para o mesmo instante no mesmo provedor
   @@index([providerId, startAt])
+  @@index([serviceId, status])
+  @@index([startAt])
+  @@index([status])
 }
 
 model Booking {
@@ -94,6 +111,12 @@ model Booking {
   cancelTokenExp DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+
+  // Índices para melhorar performance
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([status])
+  @@index([cancelToken])
 }
 
 enum SlotStatus {
@@ -119,6 +142,7 @@ model Token {
   type      TokenType
   expiresAt DateTime
   revoked   Boolean   @default(false)
+  blacklisted Boolean @default(false)
   userId    String
   user      User      @relation(fields: [userId], references: [id])
   createdAt DateTime  @default(now())

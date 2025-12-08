@@ -135,7 +135,7 @@ const ServiceDetailPage = () => {
           {loadingSlots ? (
             <div className="text-center">Carregando horários...</div>
           ) : slots.length === 0 ? (
-            <div className="text-center text-text-muted p-6 border border-border rounded-lg">
+            <div className="text-center text-text-muted p-6 border border-[var(--border)] rounded-lg">
               Nenhum horário disponível para esta data.
             </div>
           ) : (
@@ -144,7 +144,7 @@ const ServiceDetailPage = () => {
                 <button
                   key={slot.id}
                   onClick={() => handleBookSlot(slot)}
-                  className="p-4 border border-border rounded-lg text-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="p-4 border border-[var(--border)] rounded-lg text-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
                 >
                   <p className="font-bold text-lg">
                     {new Date(slot.startAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

@@ -2,8 +2,11 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { setApiInterceptorLogout, apiInterceptorLogout } from '../contexts/AuthContext'; 
 
+// Usar variável de ambiente ou padrão
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 // Request interceptor to attach token

@@ -43,7 +43,7 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const response = await api.post('/auth/register', formData);
 
@@ -53,12 +53,12 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
           hideProgressBar: true,
           pauseOnHover: false
         });
-        
+
         // Close modal if onClose is a function
         if (typeof onClose === 'function') {
           onClose();
         }
-        
+
         navigate('/login');
       }
     } catch (error) {
@@ -73,8 +73,8 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
   };
 
   return (
-    <div className="bg-card p-8 rounded-lg shadow-md w-full max-w-md">
-      <h2 className="text-2xl font-bold text-center mb-6 text-text">Criar Conta</h2>
+    <div className="bg-white dark:bg-slate-800 p-8 lg:p-10 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 w-full max-w-md">
+      <h2 className="text-3xl font-bold text-center mb-6 text-slate-900 dark:text-white">Criar Conta</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Input
           id="name"
@@ -87,7 +87,7 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
           onChange={handleChange}
           required
         />
-        
+
         <Input
           id="email-register"
           label="E-mail"
@@ -130,7 +130,7 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
               onChange={handleChange}
               className="form-radio h-5 w-5 text-primary"
             />
-            <span className="ml-2 text-text">Cliente</span>
+            <span className="ml-2 text-slate-700 dark:text-slate-300">Cliente</span>
           </label>
           <label className="flex items-center">
             <input
@@ -139,9 +139,9 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
               value="PROVIDER"
               checked={formData.role === 'PROVIDER'}
               onChange={handleChange}
-              className="form-radio h-5 w-5 text-primary"
+              className="form-radio h-5 w-5 text-indigo-600 focus:ring-indigo-500"
             />
-            <span className="ml-2 text-text">Provedor</span>
+            <span className="ml-2 text-slate-700 dark:text-slate-300">Provedor</span>
           </label>
         </div>
         <Button type="submit" fullWidth>

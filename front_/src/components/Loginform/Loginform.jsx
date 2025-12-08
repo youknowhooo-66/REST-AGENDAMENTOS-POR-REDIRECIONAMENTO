@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import Modal from "../Modal/Modal";
 import RegisterUser from "../RegisterUser/RegisterUser";
 import api from "../../services/api.js";
-import Input from "../Form/Input";
-import Button from "../Form/Button";
+import Input from "../UI/Input";
+import Button from "../UI/Button";
 import { IconMail, IconLock } from "../Icons";
 import { jwtDecode } from "jwt-decode";
 
@@ -36,14 +36,15 @@ const LoginForm = () => {
             if (response.data.accessToken) {
                 const token = response.data.accessToken;
                 login(token); // Atualiza o contexto
-                
+
                 toast.success("Login realizado com sucesso!", {
                     autoClose: 3000,
                     hideProgressBar: true,
                     pauseOnHover: false
                 });
-                
+
                 const decoded = jwtDecode(token);
+
                 if (decoded.role === 'PROVIDER') {
                     navigate('/dashboard');
                 } else if (decoded.role === 'CLIENT') {
@@ -72,46 +73,62 @@ const LoginForm = () => {
     }
 
     return (
-        <div className="w-full max-w-md bg-card text-card-foreground p-8 rounded-xl shadow-2xl">
+        <div className="min-h-screen bg-page flex items-center justify-center p-4 animate-fade-in-up">
+            <div className="w-full max-w-md bg-white dark:bg-card p-8 lg:p-10 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 hover-lift">
 
-            <h2 className="text-3xl font-bold text-center mb-2 text-text">Bem-vindo!</h2>
-            <p className="text-center text-text-muted mb-8">Faça login para continuar</p>
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                        Bem-vindo!
+                    </h2>
+                    <p className="text-slate-600 dark:text-slate-400 text-lg">
+                        Faça login para continuar
+                    </p>
+                </div>
 
-            <form onSubmit={handleLogin} className="space-y-6">
-                <Input 
-                    id="email"
-                    label="Endereço de e-mail"
-                    icon={<IconMail />}
-                    type="email"
-                    placeholder="E-mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
+                <form onSubmit={handleLogin} className="space-y-6">
+                    <Input
+                        id="email"
+                        label="Endereço de e-mail"
+                        icon={<IconMail />}
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
 
-                <Input 
-                    id="password"
-                    label="Senha"
-                    icon={<IconLock />}
-                    type="password"
-                    placeholder="Senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-                
-                <Button type="submit" fullWidth>
-                    Entrar
-                </Button>
-            </form>
-            <div className="flex justify-between mt-6 text-sm">
-                <button className="cursor-pointer text-text-muted hover:text-primary transition">Esqueceu sua senha?</button>
-                <button className="cursor-pointer font-semibold text-primary hover:underline" onClick={() => setIsModalOpen(true)}>Criar conta</button>
+                    <Input
+                        id="password"
+                        label="Senha"
+                        icon={<IconLock />}
+                        type="password"
+                        placeholder="Digite sua senha"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+
+                    <Button type="submit" fullWidth className="mt-8">
+                        Entrar
+                    </Button>
+                </form>
+
+                <div className="flex justify-between mt-8 text-sm gap-4">
+                    <button className="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors-smooth font-medium">
+                        Esqueceu sua senha?
+                    </button>
+                    <button
+                        className="font-semibold text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary transition-colors-smooth"
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Criar conta
+                    </button>
+                </div>
+
+                <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                    <RegisterUser onClose={() => setIsModalOpen(false)} />
+                </Modal>
             </div>
-
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                <RegisterUser onClose={() => setIsModalOpen(false)} />
-            </Modal>
         </div>
 
     )

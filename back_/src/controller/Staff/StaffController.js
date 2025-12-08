@@ -5,7 +5,7 @@ const { Role } = pkg;
 class StaffController {
 
     async create(req, res) {
-        const { name } = req.body;
+        const { name, imageUrl } = req.body;
         const { userId, role } = req.user;
 
         if (role !== Role.PROVIDER) {
@@ -28,6 +28,7 @@ class StaffController {
             const newStaff = await prisma.staff.create({
                 data: {
                     name,
+                    imageUrl: imageUrl || null,
                     providerId: provider.id,
                 },
             });
@@ -97,7 +98,7 @@ class StaffController {
 
     async update(req, res) {
         const { id } = req.params;
-        const { name } = req.body;
+        const { name, imageUrl } = req.body;
         const { userId, role } = req.user;
 
         if (role !== Role.PROVIDER) {
@@ -125,9 +126,14 @@ class StaffController {
                 return res.status(404).json({ error: 'Funcionário não encontrado ou não pertence a este provedor.' });
             }
 
+            const updateData = { name };
+            if (imageUrl !== undefined) {
+                updateData.imageUrl = imageUrl;
+            }
+
             const updatedStaff = await prisma.staff.update({
                 where: { id: id, providerId: provider.id },
-                data: { name },
+                data: updateData,
             });
             return res.status(200).json(updatedStaff);
         } catch (error) {

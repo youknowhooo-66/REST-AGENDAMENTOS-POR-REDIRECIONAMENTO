@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import AppointmentTable from '../../components/AppointmentTable/AppointmentTable';
 import { toast } from 'react-toastify';
-import Input from '../../components/Form/Input'; // Assuming a generic Input component
-import { IconFilter } from '../../components/Icons'; // Assuming an IconFilter
+import Input from '../../components/UI/Input';
+import Button from '../../components/UI/Button';
+import { IconFilter, IconCalendar, IconUser, IconBriefcase } from '../../components/Icons';
 
 const BookingManagementPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filterDate, setFilterDate] = useState('');
   const [filterServiceId, setFilterServiceId] = useState('');
   const [filterStaffId, setFilterStaffId] = useState('');
@@ -36,21 +36,25 @@ const BookingManagementPage = () => {
       if (filterDate) query += `date=${filterDate}&`;
       if (filterServiceId) query += `serviceId=${filterServiceId}&`;
       if (filterStaffId) query += `staffId=${filterStaffId}&`;
-      if (query) query = `?${query.slice(0, -1)}`; // Remove trailing '&'
+      if (query) query = `?${query.slice(0, -1)}`;
 
       const response = await api.get(`/bookings/provider${query}`);
-      const mappedAppointments = response.data.map(booking => ({
+
+      const mappedAppointments = Array.isArray(response.data) ? response.data.map(booking => ({
         id: booking.id,
         providerName: booking.user.name,
         serviceName: booking.slot.service.name,
+        serviceImageUrl: booking.slot.service.imageUrl,
+        staffImageUrl: booking.user.avatarUrl,
         startTime: booking.slot.startAt,
         endTime: booking.slot.endAt,
         status: booking.status,
-      }));
+        user: booking.user
+      })) : [];
+
       setAppointments(mappedAppointments);
     } catch (err) {
       console.error('Erro ao buscar agendamentos:', err);
-      setError(err.message);
       toast.error('Erro ao carregar agendamentos.');
     } finally {
       setLoading(false);
@@ -59,11 +63,11 @@ const BookingManagementPage = () => {
 
   useEffect(() => {
     fetchDependencies();
-  }, []); // Fetch dependencies only once on mount
+  }, []);
 
   useEffect(() => {
     fetchAppointments();
-  }, [filterDate, filterServiceId, filterStaffId]); // Re-fetch appointments when filters change
+  }, [filterDate, filterServiceId, filterStaffId]);
 
   const handleClearFilters = () => {
     setFilterDate('');
@@ -77,10 +81,9 @@ const BookingManagementPage = () => {
     }
 
     try {
-      // Assuming a backend endpoint for provider to cancel a booking by ID
-      await api.post(`/bookings/${appointmentId}/provider-cancel`); 
+      await api.post(`/bookings/${appointmentId}/cancel`);
       toast.success('Agendamento cancelado com sucesso!');
-      fetchAppointments(); // Refresh the list
+      fetchAppointments();
     } catch (err) {
       console.error('Erro ao cancelar agendamento:', err);
       const errorMessage = err.response?.data?.message || 'Erro ao cancelar agendamento.';
@@ -88,34 +91,54 @@ const BookingManagementPage = () => {
     }
   };
 
-  if (loading) return <div className="text-center p-4">Carregando agendamentos...</div>;
-  if (error) return <div className="text-center p-4 text-red-500">Erro: {error}</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold text-text mb-6">Gerenciar Agendamentos</h1>
+    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground tracking-tight">Gerenciar Agendamentos</h1>
+          <p className="text-muted-foreground mt-1">Visualize e gerencie os agendamentos dos seus serviços.</p>
+        </div>
+      </div>
 
       {/* Filter Section */}
-      <div className="bg-card p-4 rounded-lg shadow-md mb-6">
-        <h2 className="text-xl font-semibold text-text mb-3 flex items-center gap-2">
-          <IconFilter size={20} /> Filtrar Agendamentos
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 transition-all hover:shadow-md">
+        <div className="flex items-center gap-2 mb-6 text-card-foreground border-b border-border pb-4">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <IconFilter size={20} />
+          </div>
+          <h2 className="text-lg font-semibold">Filtros Avançados</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Input
-            label="Data"
+            label="Data do Agendamento"
             type="date"
             name="filterDate"
+            icon={IconCalendar}
             value={filterDate}
             onChange={(e) => setFilterDate(e.target.value)}
+            className="bg-background border-border"
           />
-          <div>
-            <label htmlFor="filterService" className="block text-sm font-medium text-text-muted mb-1">Serviço</label>
+
+          <div className="space-y-1.5">
+            <label htmlFor="filterService" className="block text-sm font-semibold text-foreground flex items-center gap-2">
+              <IconBriefcase size={16} className="text-primary" />
+              Serviço
+            </label>
             <select
               id="filterService"
               name="filterService"
               value={filterServiceId}
               onChange={(e) => setFilterServiceId(e.target.value)}
-              className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none"
             >
               <option value="">Todos os Serviços</option>
               {serviceList.map(service => (
@@ -123,14 +146,18 @@ const BookingManagementPage = () => {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor="filterStaff" className="block text-sm font-medium text-text-muted mb-1">Funcionário</label>
+
+          <div className="space-y-1.5">
+            <label htmlFor="filterStaff" className="block text-sm font-semibold text-foreground flex items-center gap-2">
+              <IconUser size={16} className="text-primary" />
+              Funcionário
+            </label>
             <select
               id="filterStaff"
               name="filterStaff"
               value={filterStaffId}
               onChange={(e) => setFilterStaffId(e.target.value)}
-              className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full p-2.5 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none appearance-none"
             >
               <option value="">Todos os Funcionários</option>
               {staffList.map(staff => (
@@ -139,14 +166,25 @@ const BookingManagementPage = () => {
             </select>
           </div>
         </div>
-        <div className="flex justify-end mt-4">
-          <Button variant="secondary" onClick={handleClearFilters}>
+
+        <div className="flex justify-end mt-6 pt-4 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={handleClearFilters}
+            className="text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          >
             Limpar Filtros
           </Button>
         </div>
       </div>
 
-      <AppointmentTable appointments={appointments} onCancelAppointment={handleCancelAppointment} />
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <AppointmentTable
+          appointments={appointments}
+          onCancelAppointment={handleCancelAppointment}
+          isProviderView={true}
+        />
+      </div>
     </div>
   );
 };

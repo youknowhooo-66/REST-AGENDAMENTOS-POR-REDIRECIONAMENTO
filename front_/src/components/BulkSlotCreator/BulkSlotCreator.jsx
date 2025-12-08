@@ -102,7 +102,7 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                         name="serviceId"
                         value={formData.serviceId}
                         onChange={handleChange}
-                        className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full p-3 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
                         required
                     >
                         <option value="">Selecione um serviço</option>
@@ -124,7 +124,7 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                         name="staffId"
                         value={formData.staffId}
                         onChange={handleChange}
-                        className="w-full p-3 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+                        className="w-full p-3 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                         <option value="">Nenhum funcionário</option>
                         {staffList.map((staff) => (
@@ -168,7 +168,7 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                                 onClick={() => handleDayToggle(day.value)}
                                 className={`p-2 rounded-lg border-2 transition-colors text-sm font-medium ${formData.daysOfWeek.includes(day.value)
                                         ? 'border-primary bg-primary text-primary-foreground'
-                                        : 'border-border bg-card text-text hover:border-primary/50'
+                                        : 'border-[var(--border)] bg-card text-text hover:border-primary/50'
                                     }`}
                             >
                                 {day.label}
@@ -197,7 +197,7 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                                     type="time"
                                     value={slot.start}
                                     onChange={(e) => handleTimeSlotChange(index, 'start', e.target.value)}
-                                    className="flex-1 p-2 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="flex-1 p-2 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
                                     required
                                 />
                                 <span className="text-text-muted">até</span>
@@ -205,7 +205,7 @@ const BulkSlotCreator = ({ onClose, staffList, serviceList, onSuccess }) => {
                                     type="time"
                                     value={slot.end}
                                     onChange={(e) => handleTimeSlotChange(index, 'end', e.target.value)}
-                                    className="flex-1 p-2 border border-border rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    className="flex-1 p-2 border border-[var(--border)] rounded-lg bg-input text-text focus:ring-2 focus:ring-primary focus:border-transparent"
                                     required
                                 />
                                 {formData.timeSlots.length > 1 && (

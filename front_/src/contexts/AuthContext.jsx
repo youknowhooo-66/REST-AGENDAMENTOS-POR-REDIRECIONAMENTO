@@ -18,6 +18,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // New loading state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +45,11 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
         setUser(null);
         navigate('/login');
+      } finally { // Ensure loading is set to false
+        setLoading(false);
       }
+    } else { // No token found
+      setLoading(false);
     }
   }, [navigate]);
 
@@ -81,11 +86,19 @@ export const AuthProvider = ({ children }) => {
     setUser,
     login,
     logout,
-  }), [user, login, logout]);
+    loading,
+    isAuthenticated: !!user, // Add isAuthenticated based on user presence
+  }), [user, login, logout, loading]);
 
   return (
     <AuthContext.Provider value={contextValue}>
-      {children}
+      {loading ? ( // Conditional rendering based on loading state
+        <div className="flex justify-center items-center h-screen text-slate-600 dark:text-slate-400">
+          Carregando...
+        </div>
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 };

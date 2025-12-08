@@ -66,43 +66,67 @@ const UserProfile = () => {
     };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Meu Perfil</h1>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <img src={user?.avatarUrl ? `http://localhost:3000${user.avatarUrl}`: ''} alt="Avatar" className="w-24 h-24 rounded-full" />
-                </div>
-                <Input
-                    label="Avatar"
-                    type="file"
-                    onChange={handleFileChange}
-                />
-                <Input
-                    label="Nome"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                />
-                <Input
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-                {user && user.role === 'PROVIDER' && (
-                    <Input
-                        label="Nome do Provedor"
-                        type="text"
-                        value={providerName}
-                        onChange={(e) => setProviderName(e.target.value)}
-                    />
-                )}
-                <Button type="submit" disabled={loading}>
-                    {loading ? 'Salvando...' : 'Salvar'}
-                </Button>
-            </form>
+
+        <div className="max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Meu Perfil</h1>
+
+            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-8 border border-slate-100 dark:border-slate-700">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="flex flex-col items-center mb-8">
+                        <div className="w-32 h-32 rounded-full bg-slate-100 dark:bg-slate-700 mb-4 overflow-hidden ring-4 ring-indigo-50 dark:ring-indigo-900/20">
+                            {avatarUrl ? (
+                                <img
+                                    src={avatarUrl.startsWith('http') ? avatarUrl : `http://localhost:3000${avatarUrl}`}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                    <span className="text-4xl font-bold">{name?.charAt(0)?.toUpperCase()}</span>
+                                </div>
+                            )}
+                        </div>
+                        <div className="w-full max-w-xs">
+                            <Input
+                                type="file"
+                                onChange={handleFileChange}
+                                className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                        <Input
+                            label="Nome"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                        <Input
+                            label="Email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                        {user && user.role === 'PROVIDER' && (
+                            <Input
+                                label="Nome do Provedor"
+                                type="text"
+                                value={providerName}
+                                onChange={(e) => setProviderName(e.target.value)}
+                            />
+                        )}
+                    </div>
+
+                    <div className="pt-4">
+                        <Button type="submit" disabled={loading} fullWidth className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg">
+                            {loading ? 'Salvando...' : 'Salvar Alterações'}
+                        </Button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

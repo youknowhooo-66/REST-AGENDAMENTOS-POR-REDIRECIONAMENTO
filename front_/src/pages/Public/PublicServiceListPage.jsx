@@ -37,7 +37,7 @@ const PublicServiceListPage = () => {
         </h1>
 
         {services.length === 0 ? (
-          <div className="text-center text-text-muted p-8 border border-border rounded-lg">
+          <div className="text-center text-text-muted p-8 border border-[var(--border)] rounded-lg">
             <p>Nenhum serviço disponível no momento.</p>
           </div>
         ) : (

@@ -52,9 +52,9 @@ class UserController {
     // TODO: Add role-based access control. A user should only be able to update their own data, unless they are an ADMIN.
     async update(req, res) {
         const { id } = req.params;
-        const { name, email, password, role } = req.body;
+        const { name, email, password, role, phone, age } = req.body;
         const { userId, role: userRole } = req.user; // Renomear 'role' do req.user para 'userRole'
-        let updateData = { name, email }; // Inicializar sem 'role' para evitar sobrescrita indesejada
+        let updateData = { name, email, phone }; // Inicializar com os campos que não precisam de tratamento especial
 
         // Permissão: Apenas ADMIN pode atualizar qualquer usuário, ou usuário pode atualizar a si mesmo
         if (userRole !== Role.ADMIN && userId !== id) {
@@ -72,7 +72,15 @@ class UserController {
                 updateData.password = await bcrypt.hash(password, 10);
             }
 
-            // 2. Validação e aplicação do Role (se fornecido e permitido)
+            // 2. Tratar 'age'
+            if (age !== undefined) {
+                updateData.age = parseInt(age, 10);
+                if (isNaN(updateData.age)) {
+                    return res.status(400).json({ error: 'Idade deve ser um número válido.' });
+                }
+            }
+
+            // 3. Validação e aplicação do Role (se fornecido e permitido)
             if (role && userRole === Role.ADMIN) { // Só aplica se for ADMIN
                 if (!Object.values(Role).includes(role.toUpperCase())) {
                     return res.status(400).json({ error: 'Role inválido.' });
@@ -84,11 +92,11 @@ class UserController {
                 return res.status(403).json({ error: 'Você não tem permissão para alterar o papel (role) de um usuário.' });
             }
 
-            // 3. Atualização no Prisma
+            // 4. Atualização no Prisma
             const updatedUser = await prisma.user.update({
                 where: { id: id },
                 data: updateData,
-                select: { id: true, name: true, email: true, role: true },
+                select: { id: true, name: true, email: true, role: true, phone: true, age: true },
             });
 
             return res.status(200).json(updatedUser);
