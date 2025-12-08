@@ -288,7 +288,6 @@ class BookingService {
                     provider: {
                         select: {
                             name: true,
-                            avatarUrl: true // Include provider's avatarUrl
                         }
                     }
                 }
