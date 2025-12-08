@@ -88,6 +88,18 @@ const UserProfile = () => {
             // This endpoint `/users/profile` is handled by userController.updateProfile
             const response = await api.put('/users/profile', updatedData);
             setUser(response.data); // Update user context with new data
+
+            // Explicitly update local states with the new data from the response
+            setName(response.data.name || '');
+            setEmail(response.data.email || '');
+            setPhone(response.data.phone || '');
+            setAge(response.data.name || '');
+            setAvatarUrl(response.data.avatarUrl || '');
+            setTheme(response.data.theme || 'default');
+            if (response.data.role === 'PROVIDER' && response.data.provider) {
+                setProviderName(response.data.provider.name || '');
+            }
+
             toast.success('Perfil atualizado com sucesso!');
         } catch (error) {
             console.error('Erro ao atualizar perfil:', error);
