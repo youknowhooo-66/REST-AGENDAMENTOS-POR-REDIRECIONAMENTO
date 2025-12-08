@@ -85,8 +85,8 @@ const UserProfile = () => {
         }
 
         try {
-            // This endpoint `/user/profile` is handled by userController.updateProfile
-            const response = await api.put('/user/profile', updatedData);
+            // This endpoint `/users/profile` is handled by userController.updateProfile
+            const response = await api.put('/users/profile', updatedData);
             setUser(response.data); // Update user context with new data
             toast.success('Perfil atualizado com sucesso!');
         } catch (error) {
