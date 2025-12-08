@@ -93,7 +93,7 @@ const UserProfile = () => {
             setName(response.data.name || '');
             setEmail(response.data.email || '');
             setPhone(response.data.phone || '');
-            setAge(response.data.name || '');
+            setAge(response.data.age || ''); // Corrected: Should use response.data.age
             setAvatarUrl(response.data.avatarUrl || '');
             setTheme(response.data.theme || 'default');
             if (response.data.role === 'PROVIDER' && response.data.provider) {
