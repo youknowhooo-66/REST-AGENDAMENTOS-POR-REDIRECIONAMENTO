@@ -136,9 +136,46 @@ class UserController {
         }
     }
 
+    async changePassword(req, res) {
+        const { userId } = req.user; // ID do usuário autenticado
+        const { currentPassword, newPassword } = req.body; // newPassword já validada pelo Zod
+
+        try {
+            // 1. Buscar usuário para verificar a senha atual
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { password: true }, // Apenas a senha hash
+            });
+
+            if (!user) {
+                return res.status(404).json({ error: 'Usuário não encontrado.' });
+            }
+
+            // 2. Comparar a senha atual fornecida com a senha hash armazenada
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(401).json({ error: 'Senha atual incorreta.' });
+            }
+
+            // 3. Fazer hash da nova senha
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+            // 4. Atualizar a senha do usuário
+            await prisma.user.update({
+                where: { id: userId },
+                data: { password: hashedPassword },
+            });
+
+            return res.status(200).json({ message: 'Senha alterada com sucesso!' });
+        } catch (error) {
+            console.error('Erro ao alterar senha:', error);
+            return res.status(500).json({ error: 'Erro interno do servidor ao alterar senha.' });
+        }
+    }
+
     async updateProfile(req, res) {
         const { userId } = req.user;
-        const { name, email, avatarUrl, providerName } = req.body;
+        const { name, email, avatarUrl, providerName, theme } = req.body;
 
         try {
             const updatedUser = await prisma.$transaction(async (tx) => {
@@ -148,6 +185,7 @@ class UserController {
                         name,
                         email,
                         avatarUrl,
+                        theme,
                     },
                     include: {
                         provider: true,

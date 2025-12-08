@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useLayoutEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 // Função auxiliar para converter Hex para RGB (r g b)
 const hexToRgb = (hex) => {
@@ -79,8 +80,14 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  const { user } = useAuth(); // Access user from AuthContext
+
   // Estado para o modo de tema: 'light', 'dark', ou 'system'
   const [themeMode, setThemeMode] = useState(() => {
+    // Prioritize user's saved themeMode, then localStorage, then system
+    if (user?.theme && ['dark', 'light', 'system'].includes(user.theme)) {
+        return user.theme;
+    }
     return localStorage.getItem('theme-mode') || 'system';
   });
 
@@ -89,9 +96,27 @@ export const ThemeProvider = ({ children }) => {
 
   // Estado para Cor do Tema
   const [colorTheme, setColorTheme] = useState(() => {
+    // Prioritize user's saved colorTheme, then localStorage
+    if (user?.theme && COLOR_THEMES[user.theme.toUpperCase()]) {
+        return user.theme.toUpperCase();
+    }
     const saved = localStorage.getItem('theme-color');
     return saved && COLOR_THEMES[saved] ? saved : 'INDIGO';
   });
+
+  // Effect to update themeMode and colorTheme when user changes
+  useEffect(() => {
+    if (user?.theme) {
+        // Update themeMode if user.theme is a valid mode
+        if (['dark', 'light', 'system'].includes(user.theme)) {
+            setThemeMode(user.theme);
+        }
+        // Update colorTheme if user.theme is a valid color key
+        if (COLOR_THEMES[user.theme.toUpperCase()]) {
+            setColorTheme(user.theme.toUpperCase());
+        }
+    }
+  }, [user?.theme]);
 
   // Efeito para detectar preferências do sistema e atualizar isDark
   useLayoutEffect(() => {

@@ -25,6 +25,7 @@ model User {
   avatarUrl  String?
   phone      String?
   age        Int?
+  theme      String? @default("default")
 
   // Índices para melhorar performance
   @@index([email])
