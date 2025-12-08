@@ -30,9 +30,9 @@ import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <ThemeProvider>
           <Suspense fallback={
             <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -79,9 +79,9 @@ function App() {
             position="bottom-right"
             theme="colored"
           />
-        </Router>
-      </ThemeProvider>
-    </AuthProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
