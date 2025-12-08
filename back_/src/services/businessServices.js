@@ -89,7 +89,7 @@ class BookingService {
         }
 
         // Validar se usuário completou o perfil
-        if (!user.name || !user.phone) {
+        if (!user.name) {
             throw new ValidationError('Complete seu perfil antes de fazer um agendamento');
         }
 
@@ -124,13 +124,13 @@ class BookingService {
         return await prisma.$transaction(async (tx) => {
             // 1. Atualizar status do slot (lock para evitar concorrência)
             const updatedSlot = await tx.availabilitySlot.update({
-                where: { 
+                where: {
                     id: slot.id,
                     status: SlotStatus.OPEN // Garante que só atualiza se ainda estiver OPEN
                 },
                 data: { status: SlotStatus.BOOKED, userId: user.id }
             });
-            
+
             if (!updatedSlot) {
                 throw new ValidationError('Este horário não está mais disponível (foi agendado por outro usuário)');
             }
@@ -161,12 +161,6 @@ class BookingService {
                         }
                     }
                 }
-            });
-
-            // 3. Atualizar slot com bookingId para manter integridade referencial
-            await tx.availabilitySlot.update({
-                where: { id: slot.id },
-                data: { bookingId: booking.id }
             });
 
             return booking;
@@ -230,15 +224,14 @@ class BookingService {
             const updatedBooking = await tx.booking.update({
                 where: { id: booking.id },
                 data: {
-                    status: BookingStatus.CANCELLED,
-                    cancelledAt: new Date()
+                    status: BookingStatus.CANCELLED
                 }
             });
 
             // 2. Liberar slot
             await tx.availabilitySlot.update({
                 where: { id: booking.slotId },
-                data: { status: SlotStatus.OPEN, bookingId: null }
+                data: { status: SlotStatus.OPEN, userId: null }
             });
 
             return updatedBooking;
@@ -288,6 +281,17 @@ class BookingService {
                     provider: {
                         select: {
                             name: true,
+                            owner: {
+                                select: {
+                                    avatarUrl: true
+                                }
+                            }
+                        }
+                    },
+                    staff: {
+                        select: {
+                            name: true,
+                            imageUrl: true
                         }
                     }
                 }
@@ -310,7 +314,7 @@ class BookingService {
                 }),
                 prisma.booking.count({ where })
             ]);
-    
+
             return {
                 data: bookings,
                 meta: {
@@ -324,6 +328,44 @@ class BookingService {
             console.error('Error in getClientBookings service:', error);
             throw error; // Re-throw to be caught by catchAsync
         }
+    }
+
+    /**
+     * Cancela um agendamento como cliente
+     */
+    async cancelBookingAsClient(bookingId, userId) {
+        return await prisma.$transaction(async (tx) => {
+            // 1. Buscar booking e verificar se pertence ao usuário
+            const booking = await tx.booking.findUnique({
+                where: { id: bookingId },
+            });
+
+            if (!booking) {
+                throw new NotFoundError('Agendamento não encontrado.');
+            }
+
+            if (booking.userId !== userId) {
+                throw new ValidationError('Você não tem permissão para cancelar este agendamento.');
+            }
+
+            if (booking.status === BookingStatus.CANCELLED) {
+                return { message: 'Agendamento já foi cancelado.', booking };
+            }
+
+            // 2. Atualizar booking
+            const updatedBooking = await tx.booking.update({
+                where: { id: bookingId },
+                data: { status: BookingStatus.CANCELLED },
+            });
+
+            // 3. Liberar slot
+            await tx.availabilitySlot.update({
+                where: { id: booking.slotId },
+                data: { status: SlotStatus.OPEN, userId: null }, // Also remove userId from the slot
+            });
+
+            return { message: 'Agendamento cancelado com sucesso.', booking: updatedBooking };
+        });
     }
 
     /**
@@ -446,13 +488,13 @@ class BookingService {
             // Atualizar booking
             const updatedBooking = await tx.booking.update({
                 where: { id: booking.id },
-                data: { status: BookingStatus.CANCELLED, cancelledAt: new Date() },
+                data: { status: BookingStatus.CANCELLED },
             });
 
             // Liberar slot
             await tx.availabilitySlot.update({
                 where: { id: booking.slotId },
-                data: { status: SlotStatus.OPEN, bookingId: null },
+                data: { status: SlotStatus.OPEN, userId: null },
             });
 
             return { message: 'Agendamento cancelado com sucesso.', booking: updatedBooking };
@@ -495,13 +537,13 @@ class BookingService {
             // Atualizar booking
             const updatedBooking = await tx.booking.update({
                 where: { id: bookingId },
-                data: { status: BookingStatus.CANCELLED, cancelledAt: new Date() },
+                data: { status: BookingStatus.CANCELLED },
             });
 
             // Liberar slot
             await tx.availabilitySlot.update({
                 where: { id: booking.slotId },
-                data: { status: SlotStatus.OPEN, bookingId: null },
+                data: { status: SlotStatus.OPEN, userId: null },
             });
 
             return { message: 'Agendamento cancelado com sucesso pelo provedor.', booking: updatedBooking };

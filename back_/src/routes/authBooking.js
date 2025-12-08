@@ -5,6 +5,7 @@ import {
     getClientBookings,
     getProviderBookings,
     providerCancelBooking,
+    clientCancelBooking,
 } from '../controller/Booking/BookingController.js';
 import { validate } from '../middleware/validation.js';
 import {
@@ -36,6 +37,12 @@ bookingRouter.get('/provider',
 // CANCEL: Cancelar agendamento via token (link de email)
 bookingRouter.get('/cancel',
     cancelBooking
+);
+
+// CANCEL: Cliente cancela um agendamento
+bookingRouter.delete('/:bookingId',
+    validate(cancelBookingSchema),
+    clientCancelBooking
 );
 
 // CANCEL: Provedor cancela um agendamento

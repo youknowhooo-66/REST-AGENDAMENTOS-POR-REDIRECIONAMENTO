@@ -232,9 +232,17 @@ const ClientBookingPage = () => {
                                                             até {endDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                         {slot.staff && (
-                                                            <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 dark:text-slate-400">
-                                                                <IconUser size={12} />
-                                                                {slot.staff.name}
+                                                            <div className="flex items-center gap-2 mt-2 text-xs text-slate-600 dark:text-slate-400">
+                                                                {slot.staff.imageUrl ? (
+                                                                    <img
+                                                                        src={slot.staff.imageUrl.startsWith('http') ? slot.staff.imageUrl : `http://localhost:3000${slot.staff.imageUrl}`}
+                                                                        alt={slot.staff.name}
+                                                                        className="w-5 h-5 rounded-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <IconUser size={12} />
+                                                                )}
+                                                                <span>{slot.staff.name}</span>
                                                             </div>
                                                         )}
                                                     </button>

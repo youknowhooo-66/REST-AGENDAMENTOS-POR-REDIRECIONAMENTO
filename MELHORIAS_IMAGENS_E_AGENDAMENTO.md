@@ -278,3 +278,4 @@ Todas as URLs de imagens são formatadas através da função `formatImageUrl()`
 **Data de Implementação:** 2025-01-XX
 **Status:** ✅ Todas as funcionalidades implementadas e testadas
 
+

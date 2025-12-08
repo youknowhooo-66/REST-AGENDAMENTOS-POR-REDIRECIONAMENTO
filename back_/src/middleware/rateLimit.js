@@ -31,7 +31,7 @@ export const apiLimiter = rateLimit({
  */
 export const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 5, // 5 tentativas
+    max: 100, // 100 tentativas
     message: {
         status: 'error',
         message: 'Muitas tentativas de login. Tente novamente em 15 minutos.',

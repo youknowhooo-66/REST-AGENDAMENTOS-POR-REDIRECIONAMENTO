@@ -909,7 +909,7 @@ const Scheduling = () => {
 
     // Check if user needs to complete profile
     const needsProfileCompletion = useMemo(
-        () => user && (!user.name || !user.phone),
+        () => user && (!user.name),
         [user]
     );
 

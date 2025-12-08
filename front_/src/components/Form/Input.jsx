@@ -61,8 +61,8 @@ const Input = ({
             transition-smooth
             disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-900
             shadow-sm hover:shadow focus:shadow-md
-            ${icon ? 'pl-12' : 'pl-4'}
           `}
+          style={{ paddingLeft: icon ? '48px' : '16px' }}
           {...props}
         />
       </div>

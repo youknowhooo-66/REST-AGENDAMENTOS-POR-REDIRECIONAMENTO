@@ -20,57 +20,57 @@ export const createBooking = catchAsync(async (req, res) => {
 
     const booking = await bookingService.createBooking(userId, slotId);
 
-        res.status(201).json(booking);
+    res.status(201).json(booking);
 
-    });
+});
 
-    
 
-    /**
 
-     * Cancela um agendamento usando token
+/**
 
-     * DELETE /api/bookings/cancel?token=xxx
+ * Cancela um agendamento usando token
 
-     */
+ * DELETE /api/bookings/cancel?token=xxx
 
-    export const cancelBooking = catchAsync(async (req, res) => {
+ */
 
-        const { token } = req.query;
+export const cancelBooking = catchAsync(async (req, res) => {
 
-    
+    const { token } = req.query;
 
-        if (!token) {
 
-            return res.status(400).json({ error: 'Token de cancelamento é obrigatório.' });
 
-        }
+    if (!token) {
 
-    
+        return res.status(400).json({ error: 'Token de cancelamento é obrigatório.' });
 
-        const result = await bookingService.cancelBookingByToken(token);
+    }
 
-    
 
-        res.status(200).json(result);
 
-    });
+    const result = await bookingService.cancelBookingByToken(token);
 
-    
 
-    
 
-    /**
+    res.status(200).json(result);
 
-     * Lista agendamentos do cliente autenticado
+});
 
-     * GET /api/bookings?page=1&limit=10&status=PENDING
 
-     */
+
+
+
+/**
+
+ * Lista agendamentos do cliente autenticado
+
+ * GET /api/bookings?page=1&limit=10&status=PENDING
+
+ */
 export const getClientBookings = catchAsync(async (req, res) => {
     console.log('--- GET CLIENT BOOKINGS ---');
     console.log('User from token:', JSON.stringify(req.user, null, 2));
-    
+
     const { userId, role } = req.user;
 
     if (role !== Role.CLIENT) {
@@ -158,6 +158,40 @@ export const providerCancelBooking = catchAsync(async (req, res) => {
     res.status(200).json(result);
 });
 
+/**
+ * Cliente cancela um agendamento
+ * DELETE /api/bookings/:bookingId
+ */
+/**
+ * Cancela um agendamento (Genérico para Cliente e Provedor)
+ * DELETE /api/bookings/:bookingId
+ */
+export const clientCancelBooking = catchAsync(async (req, res) => {
+    const { bookingId } = req.params;
+    const { userId, role } = req.user;
+
+    if (role === Role.CLIENT) {
+        const result = await bookingService.cancelBookingAsClient(bookingId, userId);
+        return res.status(200).json(result);
+    }
+
+    if (role === Role.PROVIDER) {
+        // Buscar providerId do usuário
+        const provider = await prisma.provider.findUnique({
+            where: { ownerId: userId }
+        });
+
+        if (!provider) {
+            throw new NotFoundError('Provedor não encontrado para este usuário.');
+        }
+
+        const result = await bookingService.providerCancelBooking(bookingId, provider.id);
+        return res.status(200).json(result);
+    }
+
+    return res.status(403).json({ error: 'Ação não permitida para este tipo de usuário.' });
+});
+
 export const createGuestBooking = catchAsync(async (req, res) => {
     const { name, email, phone, password, slotId } = req.body;
 
@@ -197,12 +231,12 @@ export const createGuestBooking = catchAsync(async (req, res) => {
             if (!slot) {
                 throw new NotFoundError('Horário não encontrado.');
             }
-            
+
             // Verificar se o slot ainda está disponível e não está no passado
             if (slot.status !== SlotStatus.OPEN) {
                 throw new ConflictError('Este horário não está mais disponível.');
             }
-            
+
             if (new Date(slot.startAt) < new Date()) {
                 throw new ConflictError('Não é possível agendar horários no passado.');
             }
@@ -223,17 +257,16 @@ export const createGuestBooking = catchAsync(async (req, res) => {
             });
 
             // 8. Atualizar o status do slot COM LOCK (garante que só atualiza se ainda estiver OPEN)
-                        const updatedSlot = await tx.availabilitySlot.updateMany({
-                            where: {
-                                id: slotId,
-                                status: SlotStatus.OPEN // Só atualiza se ainda estiver OPEN (proteção contra concorrência)
-                            },
-                            data: {
-                                status: SlotStatus.BOOKED,
-                                bookingId: newBooking.id,
-                                userId: newUser.id, // Assign the new user's ID to the slot
-                            },
-                        });            
+            const updatedSlot = await tx.availabilitySlot.updateMany({
+                where: {
+                    id: slotId,
+                    status: SlotStatus.OPEN // Só atualiza se ainda estiver OPEN (proteção contra concorrência)
+                },
+                data: {
+                    status: SlotStatus.BOOKED,
+                    userId: newUser.id, // Assign the new user's ID to the slot
+                },
+            });
             // Se nenhum registro foi atualizado, significa que o slot foi agendado por outro usuário
             if (updatedSlot.count === 0) {
                 throw new ConflictError('Este horário não está mais disponível (foi agendado por outro usuário).');
@@ -266,7 +299,7 @@ export const createGuestBooking = catchAsync(async (req, res) => {
         }
         // Tratar erro de e-mail duplicado do Prisma
         if (error.code === 'P2002' && error.meta?.target?.includes('email')) {
-             return res.status(409).json({ error: 'Este email já está registrado. Por favor, faça login para agendar.' });
+            return res.status(409).json({ error: 'Este email já está registrado. Por favor, faça login para agendar.' });
         }
         console.error('Erro na transação de agendamento de convidado:', error);
         res.status(500).json({ error: 'Falha ao criar agendamento e usuário.' });

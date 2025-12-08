@@ -164,10 +164,10 @@ const UserProfile = () => {
                             )}
                         </div>
                         <div className="w-full max-w-xs">
-                            <Input
+                            <input
                                 type="file"
                                 onChange={handleFileChange}
-                                className="text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                className="w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                             />
                         </div>
                     </div>
@@ -217,7 +217,7 @@ const UserProfile = () => {
                                 id="theme-select"
                                 value={theme}
                                 onChange={handleProfileChange(setTheme)}
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md bg-background text-text"
+                                className="mt-1 block w-full px-4 py-3.5 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary dark:focus:border-primary-light text-slate-900 dark:text-white"
                             >
                                 <option value="default">Padrão</option>
                                 <option value="dark">Escuro</option>

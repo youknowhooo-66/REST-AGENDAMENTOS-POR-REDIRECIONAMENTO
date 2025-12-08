@@ -6,17 +6,19 @@ import Button from '../Form/Button';
 const ClientDetailsModal = ({ isOpen, onClose, onSaveDetails, initialData }) => {
   const [formData, setFormData] = useState({
     name: '',
-    phone: '',
-    age: '',
+    email: '',
+    password: '',
   });
 
   useEffect(() => {
     if (initialData) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         name: initialData.name || '',
-        phone: initialData.phone || '',
-        age: initialData.age || '',
-      });
+        email: initialData.email || '',
+        // Password usually shouldn't be pre-filled unless needed, better keep it empty for security or updates
+        password: '',
+      }));
     }
   }, [initialData]);
 
@@ -31,7 +33,7 @@ const ClientDetailsModal = ({ isOpen, onClose, onSaveDetails, initialData }) => 
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Complete Seu Perfil">
-      <form onSubmit={handleSubmit} className="p-4">
+      <form onSubmit={handleSubmit} className="p-4 space-y-4">
         <Input
           label="Nome Completo"
           type="text"
@@ -41,22 +43,20 @@ const ClientDetailsModal = ({ isOpen, onClose, onSaveDetails, initialData }) => 
           required
         />
         <Input
-          label="Número de Telefone"
-          type="text"
-          name="phone"
-          value={formData.phone}
+          label="Email"
+          type="email"
+          name="email"
+          value={formData.email}
           onChange={handleChange}
           required
         />
         <Input
-          label="Idade"
-          type="number"
-          name="age"
-          value={formData.age}
+          label="Nova Senha (Opcional)"
+          type="password"
+          name="password"
+          value={formData.password}
           onChange={handleChange}
-          min="1"
-          max="120"
-          required
+          placeholder="Deixe em branco para manter a atual"
         />
         <Button type="submit" className="w-full mt-4">
           Salvar Detalhes

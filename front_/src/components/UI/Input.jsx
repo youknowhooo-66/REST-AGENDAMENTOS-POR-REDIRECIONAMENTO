@@ -29,7 +29,7 @@ const Input = ({
                     id={inputId}
                     className={`
             block w-full rounded-lg border-2 transition-all duration-200
-            ${icon ? 'pl-10' : 'pl-3'} pr-3 py-2
+            pr-3 py-2
             ${error
                             ? 'border-destructive-light focus:border-destructive focus:ring-destructive/20'
                             : 'border-input hover:border-border-strong focus:border-primary focus:ring-primary/20'
@@ -41,6 +41,7 @@ const Input = ({
             disabled:bg-muted disabled:text-muted-foreground
             ${className}
           `}
+                    style={{ paddingLeft: icon ? '48px' : '12px' }}
                     {...props}
                 />
             </div>

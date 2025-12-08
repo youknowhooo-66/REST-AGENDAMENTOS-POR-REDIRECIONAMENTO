@@ -33,8 +33,8 @@ const AppointmentList = () => {
         } else {
           mappedAppointments = response.data.data.map(booking => ({
             id: booking.id,
-            providerName: booking.slot.provider.name,
-            providerAvatarUrl: booking.slot.provider.avatarUrl, // Added provider's avatarUrl
+            providerName: booking.slot.staff?.name || booking.slot.provider.name,
+            providerAvatarUrl: booking.slot.staff?.imageUrl || booking.slot.provider.owner?.avatarUrl, // Added provider's avatarUrl
             serviceName: booking.slot.service.name,
             serviceImageUrl: booking.slot.service.imageUrl,
             startTime: booking.slot.startAt,
@@ -62,7 +62,7 @@ const AppointmentList = () => {
     }
 
     try {
-      await api.post(`/bookings/${appointmentId}/cancel`);
+      await api.delete(`/bookings/${appointmentId}`);
       toast.success('Agendamento cancelado com sucesso!');
       setAppointments(prevAppointments =>
         prevAppointments.map(app =>

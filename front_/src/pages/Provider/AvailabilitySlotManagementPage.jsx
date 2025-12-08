@@ -287,8 +287,21 @@ const AvailabilitySlotManagementPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-text">
                       {slot.service ? slot.service.name : 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
-                      {slot.staff ? slot.staff.name : 'Nenhum'}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted flex items-center gap-2">
+                      {slot.staff ? (
+                        <>
+                          {slot.staff.imageUrl && (
+                            <img
+                              src={slot.staff.imageUrl.startsWith('http') ? slot.staff.imageUrl : `http://localhost:3000${slot.staff.imageUrl}`}
+                              alt={slot.staff.name}
+                              className="w-6 h-6 rounded-full object-cover"
+                            />
+                          )}
+                          <span>{slot.staff.name}</span>
+                        </>
+                      ) : (
+                        'Nenhum'
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                       {new Date(slot.startAt).toLocaleString()}

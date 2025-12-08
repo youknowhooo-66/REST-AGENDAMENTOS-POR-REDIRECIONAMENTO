@@ -175,7 +175,7 @@ class UserController {
 
     async updateProfile(req, res) {
         const { userId } = req.user;
-        const { name, email, avatarUrl, providerName, theme } = req.body;
+        const { name, email, avatarUrl, providerName, theme, phone, age } = req.body;
 
         try {
             const updatedUser = await prisma.$transaction(async (tx) => {
@@ -186,6 +186,8 @@ class UserController {
                         email,
                         avatarUrl,
                         theme,
+                        phone,
+                        age,
                     },
                     include: {
                         provider: true,

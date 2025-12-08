@@ -437,3 +437,4 @@ if (new Date(slot.startAt) < new Date()) {
 **Versão da API:** (verificar package.json)
 **Status:** ✅ Correções Críticas Aplicadas
 
+

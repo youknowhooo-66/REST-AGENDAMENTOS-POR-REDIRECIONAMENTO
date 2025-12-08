@@ -89,8 +89,7 @@ model AvailabilitySlot {
   startAt    DateTime
   endAt      DateTime
   status     SlotStatus @default(OPEN) // OPEN, BOOKED, BLOCKED
-  booking    Booking?
-  bookingId  String?    @unique
+  bookings   Booking[]
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
@@ -105,7 +104,7 @@ model Booking {
   id             String           @id @default(uuid())
   userId         String
   user           User             @relation(fields: [userId], references: [id])
-  slotId         String           @unique
+  slotId         String
   slot           AvailabilitySlot @relation(fields: [slotId], references: [id])
   status         BookingStatus    @default(CONFIRMED) // CONFIRMED, CANCELLED
   cancelToken    String?          @unique // token para cancelamento via e-mail (assíncrono)

@@ -52,7 +52,6 @@ class AppointmentController {
                 where: { id: slotId },
                 data: {
                     status: SlotStatus.BOOKED,
-                    bookingId: newBooking.id, // Link booking to slot
                     userId: userId, // Assign client to the slot
                 },
             });
@@ -200,7 +199,7 @@ class AppointmentController {
                     // Free up the slot
                     await prisma.availabilitySlot.update({
                         where: { id: existingBooking.slotId },
-                        data: { status: SlotStatus.OPEN, bookingId: null, userId: existingBooking.slot.userId },
+                        data: { status: SlotStatus.OPEN, userId: null },
                     });
                 } else if (status === BookingStatus.CONFIRMED && role !== Role.CLIENT) {
                     // Providers/Admins can confirm (if a pending status were introduced)
@@ -246,7 +245,7 @@ class AppointmentController {
                 // Free up old slot
                 await prisma.availabilitySlot.update({
                     where: { id: existingBooking.slotId },
-                    data: { status: SlotStatus.OPEN, bookingId: null, userId: existingBooking.slot.userId },
+                    data: { status: SlotStatus.OPEN, userId: null },
                 });
 
                 // Update booking with new slot
@@ -254,7 +253,7 @@ class AppointmentController {
                 // Book new slot
                 await prisma.availabilitySlot.update({
                     where: { id: newSlotId },
-                    data: { status: SlotStatus.BOOKED, bookingId: id, userId: existingBooking.userId },
+                    data: { status: SlotStatus.BOOKED, userId: existingBooking.userId },
                 });
             }
 
@@ -306,7 +305,7 @@ class AppointmentController {
             // Free up the associated AvailabilitySlot
             await prisma.availabilitySlot.update({
                 where: { id: existingBooking.slotId },
-                data: { status: SlotStatus.OPEN, bookingId: null, userId: existingBooking.slot.userId }, // Keep original userId who created the slot
+                data: { status: SlotStatus.OPEN, userId: null }, // Keep original userId who created the slot
             });
 
             await prisma.booking.delete({

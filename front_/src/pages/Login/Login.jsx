@@ -16,7 +16,7 @@ export default function Login() {
                 </div>
             </div>
             {/* Right side - Form */}
-            <div className='flex w-full md:w-1/2 items-center justify-center p-8'>
+            <div className='flex w-full md:w-1/2 items-center justify-center'>
                 <LoginForm />
             </div>
         </div>

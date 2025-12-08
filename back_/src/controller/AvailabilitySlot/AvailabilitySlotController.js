@@ -246,7 +246,7 @@ class AvailabilitySlotController {
                 return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
             }
 
-            const slot = await prisma.availabilitySlot.findUnique({
+            const slot = await prisma.availabilitySlot.findFirst({
                 where: { id: id, providerId: providerId },
                 include: { service: true, staff: true },
             });
@@ -277,7 +277,7 @@ class AvailabilitySlotController {
                 return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
             }
 
-            const existingSlot = await prisma.availabilitySlot.findUnique({
+            const existingSlot = await prisma.availabilitySlot.findFirst({
                 where: { id: id, providerId: providerId },
             });
 
@@ -328,7 +328,7 @@ class AvailabilitySlotController {
 
 
             const updatedSlot = await prisma.availabilitySlot.update({
-                where: { id: id, providerId: providerId },
+                where: { id: id },
                 data: updateData,
             });
             return res.status(200).json(updatedSlot);
@@ -356,7 +356,7 @@ class AvailabilitySlotController {
                 return res.status(404).json({ error: 'Provedor não encontrado para o usuário autenticado.' });
             }
 
-            const existingSlot = await prisma.availabilitySlot.findUnique({
+            const existingSlot = await prisma.availabilitySlot.findFirst({
                 where: { id: id, providerId: providerId },
             });
 
@@ -368,9 +368,18 @@ class AvailabilitySlotController {
                 return res.status(400).json({ error: 'Não é possível deletar um horário já agendado. Cancele o agendamento primeiro.' });
             }
 
-            await prisma.availabilitySlot.delete({
-                where: { id: id, providerId: providerId },
-            });
+            // Use a transaction to ensure atomicity
+            await prisma.$transaction([
+                // First, delete all bookings referencing this slot (e.g., cancelled ones)
+                prisma.booking.deleteMany({
+                    where: { slotId: id },
+                }),
+                // Then, delete the slot itself
+                prisma.availabilitySlot.delete({
+                    where: { id: id, providerId: providerId },
+                })
+            ]);
+
             return res.status(204).send();
         } catch (error) {
             if (error.code === 'P2025') {
