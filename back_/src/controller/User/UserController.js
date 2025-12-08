@@ -205,6 +205,7 @@ class UserController {
             });
 
             res.status(200).json(updatedUser);
+            console.log('User profile updated successfully:', updatedUser);
         } catch (error) {
             console.error('Error updating profile:', error);
             res.status(500).json({ error: 'Internal server error' });
