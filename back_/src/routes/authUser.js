@@ -15,14 +15,14 @@ userRouter.get('/', userController.getAll);
 // READ: Buscar usuário pelo ID (Pode ser acessado pelo próprio usuário logado ou ADMIN)
 userRouter.get('/:id', userController.getById);
 
+// UPDATE: Atualizar dados do perfil do usuário logado
+userRouter.put('/profile', userController.updateProfile);
+
 // UPDATE: Atualizar dados do usuário (Pode ser acessado pelo próprio usuário logado ou ADMIN)
 userRouter.put('/:id', userController.update);
 
 // DELETE: Deletar usuário (Geralmente requer ADMIN)
 userRouter.delete('/:id', userController.delete);
-
-// UPDATE: Atualizar dados do perfil do usuário logado
-userRouter.put('/profile', userController.updateProfile);
 
 // UPDATE: Alterar senha do usuário logado
 userRouter.put('/change-password', validate(changePasswordSchema), userController.changePassword);
