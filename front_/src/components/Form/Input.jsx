@@ -48,7 +48,7 @@ const Input = ({
           disabled={disabled}
           className={`
             w-full px-4 py-3.5 
-            bg-white dark:bg-slate-800 
+            bg-[var(--background-elevated)] dark:bg-[var(--card)] 
             border-2 
             ${error
               ? 'border-destructive dark:border-destructive-light focus:border-destructive focus:ring-4 focus:ring-destructive/20'

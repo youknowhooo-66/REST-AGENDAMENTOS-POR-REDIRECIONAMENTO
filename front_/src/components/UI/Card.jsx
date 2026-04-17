@@ -1,14 +1,24 @@
-import React from 'react';
+import { cn } from "../../lib/utils";
 
-const Card = ({ children, className = "", noPadding = false, ...props }) => {
-    return (
-        <div
-            className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-300 ${noPadding ? '' : 'p-6'} ${className}`}
-            {...props}
-        >
-            {children}
-        </div>
-    );
+const Card = ({ children, className, noPadding = false, ...props }) => {
+  return (
+    <div
+      className={cn(
+        // Base structure
+        "rounded-xl border transition-all duration-300",
+        
+        // Efeito Glassmorphism Premium aplicado via index.css
+        // .glass-card lida com o bg e border para light/dark automaticamente
+        "glass-card",
+        
+        !noPadding && "p-6",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
 };
 
 export default Card;

@@ -62,7 +62,7 @@ const RegisterForm = ({ onClose }) => { // Added onClose prop for modal
         navigate('/login');
       }
     } catch (error) {
-      console.error('Erro no registro:', error);
+      console.log("Erro completo:", error.response?.data);
       const errorMessage = error.response?.data?.error || 'Erro ao registrar usuário.';
       toast.error(errorMessage, {
         autoClose: 3000,

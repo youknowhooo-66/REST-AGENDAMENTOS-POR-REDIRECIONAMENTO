@@ -3,7 +3,7 @@ dotenv.config();
 
 export const env = {
   databaseUrl: "postgresql://postgres:142536@localhost:5432/sistema_agendamento2",
-  accessSecret: process.env.ACCESS_TOKEN_SECRET,
+  accessSecret: process.env.ACCESS_TOKEN_SECRET ?? "desenvolvimento_super_secreto_32_chars_min",
   refreshSecret: process.env.REFRESH_TOKEN_SECRET ?? "FDQ@r3fresH$eCr3t", 
   accessTtl: process.env.JWT_ACCESS_EXPIRES_IN ?? 900000,
   refreshTtl: process.env.JWT_REFRESH_EXPIRES_IN ?? 28800000,

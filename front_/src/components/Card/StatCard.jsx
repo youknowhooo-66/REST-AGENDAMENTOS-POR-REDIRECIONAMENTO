@@ -6,7 +6,7 @@ const StatCard = ({ icon, title, value, change, changeType, trend }) => {
     return (
         <div className="
       group
-      bg-white dark:bg-slate-800 
+      glass-card 
       p-6 rounded-2xl 
       shadow-sm hover:shadow-xl 
       smooth-transition

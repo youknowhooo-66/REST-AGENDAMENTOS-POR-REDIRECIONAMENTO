@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import Select from '../../components/Form/Select';
 import Input from '../../components/Form/Input';
 import Button from '../../components/Form/Button';
 import { IconUser, IconMail, IconLock, IconPhone, IconCalendar } from '../../components/Icons'; // Added IconPhone, IconCalendar
@@ -172,57 +173,62 @@ const UserProfile = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Input
-                            label="Nome"
-                            type="text"
-                            value={name}
-                            onChange={handleProfileChange(setName)}
-                            required
-                        />
-                        <Input
-                            label="Email"
-                            type="email"
-                            value={email}
-                            onChange={handleProfileChange(setEmail)}
-                            required
-                        />
-                        <Input
-                            label="Telefone"
-                            type="tel"
-                            value={phone}
-                            onChange={handleProfileChange(setPhone)}
-                            icon={<IconPhone />}
-                        />
-                        <Input
-                            label="Idade"
-                            type="number"
-                            value={age}
-                            onChange={handleProfileChange(setAge)}
-                            icon={<IconCalendar />}
-                            min="0"
-                            max="120"
-                        />
-                        {user && user.role === 'PROVIDER' && (
+                    <div className="flex flex-col gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
-                                label="Nome do Provedor"
+                                label="Nome"
                                 type="text"
-                                value={providerName}
-                                onChange={handleProfileChange(setProviderName)}
+                                value={name}
+                                onChange={handleProfileChange(setName)}
+                                required
                             />
-                        )}
-                        <div className="flex flex-col">
-                            <label htmlFor="theme-select" className="block text-sm font-medium text-text-light mb-1">Tema</label>
-                            <select
-                                id="theme-select"
+                            <Input
+                                label="Email"
+                                type="email"
+                                value={email}
+                                onChange={handleProfileChange(setEmail)}
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Input
+                                label="Telefone"
+                                type="tel"
+                                value={phone}
+                                onChange={handleProfileChange(setPhone)}
+                                icon={<IconPhone />}
+                            />
+                            <Input
+                                label="Idade"
+                                type="number"
+                                value={age}
+                                onChange={handleProfileChange(setAge)}
+                                icon={<IconCalendar />}
+                                min="0"
+                                max="120"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {user && user.role === 'PROVIDER' && (
+                                <Input
+                                    label="Nome do Provedor"
+                                    type="text"
+                                    value={providerName}
+                                    onChange={handleProfileChange(setProviderName)}
+                                />
+                            )}
+                            <Select
+                                label="Tema"
                                 value={theme}
                                 onChange={handleProfileChange(setTheme)}
-                                className="mt-1 block w-full px-4 py-3.5 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-600 rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/20 focus:border-primary dark:focus:border-primary-light text-slate-900 dark:text-white"
-                            >
-                                <option value="default">Padrão</option>
-                                <option value="dark">Escuro</option>
-                                <option value="light">Claro</option>
-                            </select>
+                                options={[
+                                    { value: 'default', label: 'Padrão' },
+                                    { value: 'dark', label: 'Escuro' },
+                                    { value: 'light', label: 'Claro' }
+                                ]}
+                            />
                         </div>
                     </div>
 

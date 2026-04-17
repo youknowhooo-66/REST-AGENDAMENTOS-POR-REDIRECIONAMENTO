@@ -1,13 +1,30 @@
 import jwt from "jsonwebtoken";
 import { env } from "../../env.js";
 
+// Helper function to parse time spans like '15m' or '7d' into seconds
+function parseTimeSpanToSeconds(timeSpan) {
+    if (!timeSpan) return undefined;
+
+    const unit = timeSpan.slice(-1);
+    const value = parseInt(timeSpan.slice(0, -1), 10);
+
+    if (isNaN(value)) return undefined;
+
+    switch (unit) {
+        case 's': return value;
+        case 'm': return value * 60;
+        case 'h': return value * 60 * 60;
+        case 'd': return value * 60 * 60 * 24;
+        default: return undefined; // Unknown unit
+    }
+}
 
 export function signAccessToken(payload) {
     console.log(env)
     return jwt.sign(
         payload, env.accessSecret,
         {
-            expiresIn: Number(env.accessTtl)
+            expiresIn: parseTimeSpanToSeconds(env.accessTtl)
 
         });
 }
@@ -15,7 +32,7 @@ export function signRefreshToken(payload) {
     return jwt.sign(
         payload, env.refreshSecret,
         {
-            expiresIn: Number(env.refreshTtl)
+            expiresIn: parseTimeSpanToSeconds(env.refreshTtl)
 
         });
 }

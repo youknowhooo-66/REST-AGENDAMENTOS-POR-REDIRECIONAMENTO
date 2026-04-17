@@ -1,3 +1,54 @@
+# 🚀 API de Agendamentos com Redirecionamento
+
+API REST desenvolvida em Node.js para gerenciamento de agendamentos, com implementação de regras de negócio e controle de fluxo utilizando redirecionamento HTTP.
+
+---
+
+## 📌 Descrição
+
+Este projeto tem como objetivo simular um sistema de agendamento, permitindo a criação e gerenciamento de horários, aplicando validações e controle de fluxo entre rotas.
+
+A aplicação foi construída seguindo conceitos de arquitetura backend, organização de rotas e separação de responsabilidades.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- Node.js
+- Express
+- JavaScript (ES6+)
+- HTTP (REST API)
+
+---
+
+## ⚙️ Funcionalidades
+
+- 📅 Criação de agendamentos
+- 📋 Listagem de horários
+- 🔄 Redirecionamento entre rotas
+- 🧠 Regras de negócio para controle de disponibilidade
+- 🌐 Manipulação de requisições HTTP
+
+---
+
+## 📡 Endpoints
+
+| Método | Rota | Descrição |
+|--------|------|----------|
+| GET | /agendamentos | Lista todos os agendamentos |
+| POST | /agendamentos | Cria um novo agendamento |
+| GET | /agendamentos/:id | Retorna um agendamento específico |
+| PUT | /agendamentos/:id | Atualiza um agendamento |
+| DELETE | /agendamentos/:id | Remove um agendamento |
+
+---
+
+## ▶️ Como executar o projeto
+
+### 1. Clone o repositório
+```bash
+git clone https://github.com/youknowhooo-66/REST-AGENDAMENTOS-POR-REDIRECIONAMENTO.git
+
 # 🎨 Novo Design System - Profissional e Moderno
 
 ## 📋 Visão Geral

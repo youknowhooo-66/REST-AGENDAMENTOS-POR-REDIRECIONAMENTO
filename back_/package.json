@@ -5,7 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npx nodemon src/server.js",
+    "start": "npx nodemon -L src/server.js",
+    "dev:debug": "npx nodemon -L --inspect=0.0.0.0:9229 src/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "migrate": "npx prisma migrate dev",
     "build": "node src/server.js"
